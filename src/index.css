@@ -1,0 +1,225 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 3.9%;
+    --primary: 0 0% 9%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 0 0% 96.1%;
+    --secondary-foreground: 0 0% 9%;
+    --muted: 0 0% 96.1%;
+    --muted-foreground: 0 0% 45.1%;
+    --accent: 0 0% 96.1%;
+    --accent-foreground: 0 0% 9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 89.8%;
+    --input: 0 0% 89.8%;
+    --ring: 0 0% 3.9%;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --radius: 0.5rem;
+  }
+
+  html {
+    font-size: 18px !important;
+  }
+
+  body {
+    font-size: 18px !important;
+    line-height: 1.6;
+    min-height: 100vh;
+    color: #e5e7eb;
+    background: #030712;
+  }
+
+  /* 全局字體大小強制 */
+  * {
+    font-size: inherit;
+  }
+
+  p, span, div, li {
+    font-size: 18px !important;
+  }
+
+  h1 {
+    font-size: 32px !important;
+    font-weight: 700;
+  }
+
+  h2, h3, h4 {
+    font-size: 24px !important;
+    font-weight: 600;
+  }
+}
+
+@layer components {
+  /* 按鈕最小高度 48px */
+  button, [role="button"] {
+    min-height: 48px !important;
+    font-size: 18px !important;
+    padding: 10px 16px !important;
+  }
+
+  /* 輸入框最小高度 */
+  input, textarea, select {
+    min-height: 48px !important;
+    font-size: 18px !important;
+  }
+
+  /* 表格文字 */
+  table, td, th {
+    font-size: 16px !important;
+  }
+
+  /* 底部導航 */
+  nav button, nav [role="button"] {
+    min-height: 56px !important;
+    font-size: 15px !important;
+    padding: 8px 12px !important;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out;
+}
+
+.animate-slide-in {
+  animation: slideIn 0.4s ease-out;
+}
+
+.tabs-content {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* ===== V10.5 全站字體放大（強制覆蓋） ===== */
+@layer utilities {
+  .text-base-force { font-size: 18px !important; }
+  .text-lg-force { font-size: 20px !important; }
+  .text-xl-force { font-size: 24px !important; }
+  .text-2xl-force { font-size: 32px !important; }
+  .min-h-48 { min-height: 48px !important; }
+  .min-h-56 { min-height: 56px !important; }
+}
+
+/* 手機版觸控優化 */
+@media (max-width: 768px) {
+  html { font-size: 18px !important; }
+
+  body {
+    font-size: 18px !important;
+    padding-bottom: 80px !important;
+  }
+
+  button, [role="button"] {
+    min-height: 48px !important;
+    font-size: 17px !important;
+  }
+
+  input, textarea, select {
+    min-height: 48px !important;
+    font-size: 18px !important;
+  }
+
+  .rounded-lg {
+    margin-bottom: 12px;
+  }
+
+  .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* 卡片內間距加大 */
+  [data-slot="card-content"] {
+    padding: 16px !important;
+  }
+}
+
+/* 號碼球 22px */
+.rounded-full.text-base,
+.rounded-full.text-lg {
+  font-size: 22px !important;
+}
+
+/* 重要數字 */
+.text-amber-400.font-bold,
+.text-green-400.font-bold {
+  font-size: 22px !important;
+}
+
+/* 標籤字體修復 */
+label {
+  font-size: 18px !important;
+  font-weight: 500;
+}
+
+/* Badge 字體 */
+.badge, [class*="badge"] {
+  font-size: 14px !important;
+}
+
+/* 小註解文字 */
+[class*="text-gray-500"], [class*="text-gray-600"] {
+  font-size: 16px !important;
+}
+
+/* 進度條文字 */
+[class*="Progress"] {
+  height: 8px !important;
+}
+
+/* 隱藏 Kimi Agent 浮動元素 */
+a[href*="kimi"],
+[class*="kimi-agent"],
+[id*="kimi-agent"],
+[class*="floating"],
+[title*="Kimi"],
+a[title*="Agent"],
+[class*="agent-float"],
+[id*="agent-float"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* 確保 TabsTrigger 可點擊 */
+[data-state="inactive"][role="tab"],
+[data-state="active"][role="tab"] {
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  min-height: 44px !important;
+  font-size: 18px !important;
+  padding: 10px 16px !important;
+}
+
+/* Tabs 內容動畫 */
+[data-state="active"][role="tabpanel"] {
+  animation: fadeIn 0.2s ease-out;
+}

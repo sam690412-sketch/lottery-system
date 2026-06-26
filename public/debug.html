@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Debug - Lottery Analytics</title>
+<style>
+body { font-family: monospace; background: #0a0a0a; color: #ccc; padding: 20px; }
+h2 { color: #0f0; border-bottom: 1px solid #333; padding-bottom: 5px; }
+.key { color: #f90; }
+.value { color: #0cf; }
+pre { background: #1a1a1a; padding: 10px; border-radius: 4px; overflow-x: auto; }
+.hot { color: #f44; font-weight: bold; }
+.warm { color: #fa0; }
+.cold { color: #0af; }
+</style>
+</head>
+<body>
+<h1> Lottery Analytics Debug Panel</h1>
+<div id="output"></div>
+<script>
+function show() {
+  const out = document.getElementById('output');
+  let html = '';
+
+  // Behavior Tracker
+  html += '<h2>lottery-v18-behavior</h2>';
+  const beh = localStorage.getItem('lottery-v18-behavior');
+  if (beh) {
+    const data = JSON.parse(beh);
+    html += '<p>Register: ' + data.registerDate + '</p>';
+    html += '<p>Milestones:</p><pre>';
+    const all = ['first_login','first_ai_recommend','first_watchlist','first_dream','first_fortune','first_backtest','first_vip_page_view','first_upgrade_click'];
+    for (const e of all) {
+      const m = data.milestones[e];
+      html += (m ? '✅ ' : '❌ ') + e + '\n';
+    }
+    html += '</pre>';
+  } else { html += '<p class="cold">No data</p>'; }
+
+  // Funnel
+  html += '<h2>lottery-v18-funnel</h2>';
+  const funnel = localStorage.getItem('lottery-v18-funnel');
+  if (funnel) {
+    const f = JSON.parse(funnel);
+    html += '<pre>visitors: ' + f.visitors + '\nregisters: ' + f.registers + '\naiClicks: ' + (f.aiClicks||0) + '\nvipViews: ' + (f.vipViews||0) + '\nupgradeClicks: ' + (f.upgradeClicks||0) + '\npayments: ' + (f.payments||0) + '</pre>';
+  } else { html += '<p class="cold">No data</p>'; }
+
+  // Intent Score
+  html += '<h2>lottery-v18-intent</h2>';
+  const intent = localStorage.getItem('lottery-v18-intent');
+  if (intent) {
+    const i = JSON.parse(intent);
+    const levelClass = i.score > 70 ? 'hot' : i.score >= 31 ? 'warm' : 'cold';
+    html += '<pre class="' + levelClass + '">Score: ' + i.score + '/100\nLevel: ' + i.levelLabel + ' (' + i.level + ')</pre>';
+  } else { html += '<p class="cold">No data</p>'; }
+
+  // Analytics
+  html += '<h2>lottery-v18-analytics</h2>';
+  const analytics = localStorage.getItem('lottery-v18-analytics');
+  if (analytics) {
+    const a = JSON.parse(analytics);
+    html += '<pre>Total events: ' + a.length + '</pre>';
+  } else { html += '<p class="cold">No data</p>'; }
+
+  // A/B Test
+  html += '<h2>lottery-v18-ab-test</h2>';
+  const ab = localStorage.getItem('lottery-v18-ab-test');
+  if (ab) {
+    const a = JSON.parse(ab);
+    html += '<pre>Variant: ' + a.variant + '\nClicks: ' + a.clicks + '</pre>';
+  } else { html += '<p class="cold">No data</p>'; }
+
+  out.innerHTML = html;
+}
+// Auto-refresh every 2s
+show();
+setInterval(show, 2000);
+</script>
+</body>
+</html>

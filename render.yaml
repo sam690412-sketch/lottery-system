@@ -1,0 +1,40 @@
+services:
+  - type: web
+    name: lottery-payment-app
+    env: node
+    plan: free
+    region: singapore
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: ECPAY_ENV
+        value: sandbox
+      - key: PUBLIC_BASE_URL
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: ECPAY_MERCHANT_ID
+        sync: false
+      - key: ECPAY_HASH_KEY
+        sync: false
+      - key: ECPAY_HASH_IV
+        sync: false
+      - key: VITE_APP_ID
+        sync: false
+      - key: VITE_KIMI_AUTH_URL
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
+      # V19.0.8a: shared secret for protecting /api/sync/* (X-Service-Token)
+      - key: SYNC_SERVICE_TOKEN
+        generateValue: true
+    # V19.3.6: CRON job for daily draw sync at 22:00
+    # V19.0.8a: cron must present X-Service-Token (same SYNC_SERVICE_TOKEN value)
+    cron:
+      - type: cron
+        name: daily-draw-sync
+        schedule: "0 22 * * *"
+        command: curl -s -X POST -H "X-Service-Token: $SYNC_SERVICE_TOKEN" "$RENDER_EXTERNAL_URL/api/sync/draws" > /dev/null 2>&1 || true
