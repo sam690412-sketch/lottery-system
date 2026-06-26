@@ -83,6 +83,9 @@ function App() {
       if (detail === 'numbers') setPage('numbers');
       if (detail === 'dream') setPage('dream');
       if (detail === 'metaphysics') setPage('metaphysics');
+      if (detail === 'statistics') setPage('statistics');
+      if (detail === 'records') setPage('records');
+      if (detail === 'ranking') setPage('ranking');
       if (detail === 'admin') setPage('admin');
       if (detail === 'member') setPage('member');
     };

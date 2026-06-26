@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, SkipForward, RotateCcw, Sparkles } from 'lucide-react';
 import StepIndicator, { BUILDER_STEPS } from '@/components/builder/StepIndicator';
 import type { LotteryType } from '@/utils/lotteryConfig';
+import { userGetJson, userSetJson } from '@/utils/userStorage';
 // V16-2: 統計整合（只呼叫既有 statistics.ts）
 import { runBuilderStatistics, buildBaseNumberPool, type BuilderStatsResult, type BaseNumberPool } from '@/utils/builderStats';
 // V16-3: 夢境/生日 疊加（只呼叫既有 dream/personalNumber 引擎）
@@ -89,6 +90,29 @@ export default function BuilderPage() {
 
   // V16-2: 彩種選擇 + 統計分析狀態
   const [lotteryType, setLotteryType] = useState<LotteryType | null>(null);
+  // QA-FIX-1: 收藏到「我的號碼」(同一套 v12-keep-sets storage)。訪客本機暫存。
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saved' | 'duplicate'>('idle');
+  const saveToMyNumbers = () => {
+    if (!finalResult || !lotteryType) return;
+    const KEY = 'v12-keep-sets';
+    type KeepSet = { id: string; name: string; numbers: number[]; type: LotteryType; note: string };
+    const existing = userGetJson<KeepSet[]>(KEY, []);
+    const nums = [...finalResult.mainNumbers];
+    // 重複偵測：同彩種 + 同主號（排序後比對）
+    const sortedKey = (a: number[]) => [...a].sort((x, y) => x - y).join(',');
+    const isDup = existing.some((s) => s.type === lotteryType && sortedKey(s.numbers) === sortedKey(nums));
+    if (isDup) { setSaveStatus('duplicate'); return; }
+    const special = finalResult.specialNumber != null ? `特別號 ${finalResult.specialNumber}` : '';
+    const newSet: KeepSet = {
+      id: Date.now().toString(),
+      name: `打造號碼 ${new Date().toLocaleDateString('zh-TW')}`,
+      numbers: nums,
+      type: lotteryType,
+      note: ['由打造流程產生', special].filter(Boolean).join('・'),
+    };
+    userSetJson(KEY, [newSet, ...existing]);
+    setSaveStatus('saved');
+  };
   const [analysisLoading, setAnalysisLoading] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<BuilderStatsResult | null>(null);
   const [baseNumberPool, setBaseNumberPool] = useState<BaseNumberPool | null>(null);
@@ -619,14 +643,22 @@ export default function BuilderPage() {
                   )}
                 </div>
 
-                {/* 動作：收藏（placeholder，不接 DB/登入/localStorage）+ 重新打造 */}
-                <div className="flex items-center gap-2 pt-1">
-                  <Button onClick={() => { /* V16-5: placeholder，本版不接收藏 */ }} className="bg-amber-600 hover:bg-amber-500 text-white" title="收藏（即將推出）">
-                    收藏（即將推出）
-                  </Button>
-                  <Button variant="outline" onClick={restart} className="border-amber-700/50 text-amber-400">
-                    <RotateCcw className="w-4 h-4 mr-1" />重新打造
-                  </Button>
+                {/* QA-FIX-1: 收藏到「我的號碼」(v12-keep-sets)；訪客本機暫存 */}
+                <div className="pt-1">
+                  <div className="flex items-center gap-2">
+                    <Button onClick={saveToMyNumbers} className="bg-amber-600 hover:bg-amber-500 text-white" title="收藏到我的號碼">
+                      收藏到我的號碼
+                    </Button>
+                    <Button variant="outline" onClick={restart} className="border-amber-700/50 text-amber-400">
+                      <RotateCcw className="w-4 h-4 mr-1" />重新打造
+                    </Button>
+                  </div>
+                  {saveStatus === 'saved' && (
+                    <p className="mt-2 text-xs text-emerald-400">已收藏到「我的號碼」。提示：訪客模式僅保存在本機瀏覽器，清除瀏覽器資料或換裝置後可能消失；登入會員後可永久保存。</p>
+                  )}
+                  {saveStatus === 'duplicate' && (
+                    <p className="mt-2 text-xs text-gray-400">這組號碼已在「我的號碼」中，未重複收藏。</p>
+                  )}
                 </div>
               </div>
             )

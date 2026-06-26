@@ -91,6 +91,11 @@ const COMBO_OPTIONS = [1, 2, 3, 5, 10];
 
 export default function HomePage() {
   const navigate = useNavigate();
+  // QA-FIX-1: 狀態頁（numbers/records/statistics/metaphysics/member 等）由 App.tsx 的
+  // useState(page)+switch 渲染，navigate() 不會切換；改用與底部導覽相同的 v12-navigate 事件。
+  const goToStatePage = (key: string) => {
+    window.dispatchEvent(new CustomEvent('v12-navigate', { detail: key }));
+  };
   const obsPoolRef = useRef(false);
   const [state, setState] = useState<HomeState>({
     step: 1,
@@ -435,8 +440,8 @@ export default function HomePage() {
           開始打造我的專屬號碼
         </button>
         <div className="mt-3 flex items-center justify-center gap-4 text-xs">
-          <button onClick={() => navigate('/numbers')} className="text-gray-400 hover:text-amber-300 underline">快速選號</button>
-          <button onClick={() => navigate('/records')} className="text-gray-400 hover:text-amber-300 underline">查看紀錄</button>
+          <button onClick={() => goToStatePage('numbers')} className="text-gray-400 hover:text-amber-300 underline">快速選號</button>
+          <button onClick={() => goToStatePage('records')} className="text-gray-400 hover:text-amber-300 underline">查看紀錄</button>
         </div>
       </div>
 
@@ -445,9 +450,9 @@ export default function HomePage() {
         <div className="text-sm font-bold text-gray-300 mb-1">進階功能</div>
         <p className="text-[11px] text-gray-500 mb-3">想深入查看統計、趨勢、AI 與命理分析，可以從這裡進入。</p>
         <div className="grid grid-cols-2 gap-2 text-xs">
-          <button onClick={() => navigate('/statistics')} className="py-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-300 hover:border-amber-600/50">統計分析</button>
+          <button onClick={() => goToStatePage('statistics')} className="py-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-300 hover:border-amber-600/50">統計分析</button>
           <button onClick={() => navigate('/ai-analysis')} className="py-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-300 hover:border-amber-600/50">AI 深度分析</button>
-          <button onClick={() => navigate('/metaphysics')} className="py-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-300 hover:border-amber-600/50">命理夢境</button>
+          <button onClick={() => goToStatePage('metaphysics')} className="py-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-300 hover:border-amber-600/50">命理夢境</button>
           <button onClick={() => navigate('/trend')} className="py-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-300 hover:border-amber-600/50">趨勢分析</button>
         </div>
       </div>
@@ -483,7 +488,7 @@ export default function HomePage() {
           {/* V18: VIP 提示 */}
           {!isVIP && (
             <div className="text-center mb-3">
-              <p className="text-xs text-amber-400">免費會員顯示前2碼 · <button onClick={() => { trackEvent('vip_upgrade_click', 'ai_recommend_banner'); navigate('/member'); }} className="underline hover:text-amber-300">升級VIP</button> 查看完整6碼 + 每日5組</p>
+              <p className="text-xs text-amber-400">免費會員顯示前2碼 · <button onClick={() => { trackEvent('vip_upgrade_click', 'ai_recommend_banner'); goToStatePage('member'); }} className="underline hover:text-amber-300">升級VIP</button> 查看完整6碼 + 每日5組</p>
             </div>
           )}
 
@@ -519,7 +524,7 @@ export default function HomePage() {
 
       {/* V19.2.1: 雙入口導航 - 玄學派 / 數據派 */}
       <div className="grid grid-cols-2 gap-3">
-        <button onClick={() => { trackHomeEntry('xuanxue'); /* 留在本頁，玄學流程 */ }}
+        <button onClick={() => { trackHomeEntry('xuanxue'); navigate('/xuanxue'); }}
           className="p-4 rounded-xl border border-purple-800/40 bg-gradient-to-b from-purple-950/30 to-gray-900/80 text-center hover:border-purple-700/60 transition group">
           <Moon className="w-6 h-6 text-purple-400 mx-auto mb-2 group-hover:scale-110 transition" />
           <h3 className="text-sm font-bold text-purple-300 mb-0.5">玄學選號</h3>

@@ -79,6 +79,9 @@ export default function MyNumbersPage() {
     <div className="space-y-6 pb-24">
       <h1 className="text-2xl font-bold text-gray-100">我的號碼</h1>
       <p className="text-sm text-gray-500">管理你的固定養號、生日、車牌等個人化來源</p>
+      <p className="text-xs text-amber-400/80 rounded-lg border border-amber-900/40 bg-amber-950/15 px-3 py-2">
+        訪客模式僅保存在本機瀏覽器，清除瀏覽器資料或換裝置後可能消失；登入會員後可永久保存。
+      </p>
 
       {/* 彩種切換 */}
       <div className="flex gap-2">
