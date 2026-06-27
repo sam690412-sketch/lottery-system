@@ -508,6 +508,19 @@ export default function HomePage() {
             </div>
           </div>
 
+          {/* QA-FIX-3: 熱冷平衡 + 統計來源摘要 + 風險提示 */}
+          <div className="grid grid-cols-2 gap-2 text-center mt-2">
+            <div className="bg-gray-900/50 rounded p-2">
+              <div className="text-xs text-gray-500">熱冷平衡</div>
+              <div className="text-xs font-bold text-amber-300">{dailyRec.hotColdBalance}</div>
+            </div>
+            <div className="bg-gray-900/50 rounded p-2">
+              <div className="text-xs text-gray-500">統計來源</div>
+              <div className="text-[11px] text-gray-300 leading-tight">{dailyRec.statsSummary}</div>
+            </div>
+          </div>
+          <p className="mt-2 text-[10px] leading-relaxed text-gray-500">{dailyRec.riskNote}</p>
+
           {/* 驗證中心入口 */}
           <div className="flex gap-2 mt-3">
             <Button
