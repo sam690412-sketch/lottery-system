@@ -440,7 +440,7 @@ export default function HomePage() {
           開始打造我的專屬號碼
         </button>
         <div className="mt-3 flex items-center justify-center gap-4 text-xs">
-          <button onClick={() => goToStatePage('numbers')} className="text-gray-400 hover:text-amber-300 underline">快速選號</button>
+          <button onClick={() => navigate('/builder')} className="text-gray-400 hover:text-amber-300 underline">快速選號</button>
           <button onClick={() => goToStatePage('records')} className="text-gray-400 hover:text-amber-300 underline">查看紀錄</button>
         </div>
       </div>

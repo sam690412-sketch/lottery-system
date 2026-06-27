@@ -127,7 +127,7 @@ function App() {
 
   const location = useLocation();
   const navigate = useNavigate();
-  const isV16Route = location.pathname.startsWith('/combine') || location.pathname.startsWith('/analysis') || location.pathname.startsWith('/combine-analysis') || location.pathname.startsWith('/verify') || location.pathname.startsWith('/backtest') || location.pathname.startsWith('/xuanxue') || location.pathname.startsWith('/vip') || location.pathname.startsWith('/vip-value') || location.pathname.startsWith('/vip-roi') || location.pathname.startsWith('/dashboard') || location.pathname.startsWith('/ai-analysis') || location.pathname.startsWith('/live') || location.pathname.startsWith('/trend') || location.pathname.startsWith('/ai-recommend') || location.pathname.startsWith('/premium-ai') || location.pathname.startsWith('/data-quality');
+  const isV16Route = location.pathname.startsWith('/builder') || location.pathname.startsWith('/combine') || location.pathname.startsWith('/analysis') || location.pathname.startsWith('/combine-analysis') || location.pathname.startsWith('/verify') || location.pathname.startsWith('/backtest') || location.pathname.startsWith('/xuanxue') || location.pathname.startsWith('/vip') || location.pathname.startsWith('/vip-value') || location.pathname.startsWith('/vip-roi') || location.pathname.startsWith('/dashboard') || location.pathname.startsWith('/ai-analysis') || location.pathname.startsWith('/live') || location.pathname.startsWith('/trend') || location.pathname.startsWith('/ai-recommend') || location.pathname.startsWith('/premium-ai') || location.pathname.startsWith('/data-quality');
 
   const renderPage = () => {
     // PHASE 24: 娛樂版 Landing（/lp 隔離路由，不依賴登入/權限/quota）
