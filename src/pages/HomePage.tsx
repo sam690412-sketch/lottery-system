@@ -33,6 +33,7 @@ import {
   ChevronRight, AlertCircle, Zap, Lock, Brain, TrendingUp, Crown
 } from 'lucide-react';
 import { getDailyRecommendation } from '@/utils/backtest';
+import { buildPersonalSeed, scoreToTier, getDailyPersonality, buildExplanation, getTodaySession } from '@/utils/personalProfile';
 import { trackEvent, trackHomeEntry } from '@/utils/analytics';
 import { trackFunnel } from '@/utils/funnelAnalytics';
 import { getABVariant, getUpgradeCTA, trackABClick } from '@/utils/abTest';
@@ -418,6 +419,16 @@ export default function HomePage() {
 
   // V16.4: 今日AI推薦
   const dailyRec = useMemo(() => getDailyRecommendation(state.lotteryType), [state.lotteryType]);
+  // V19 Sprint-4: 個人化（seed 只影響顯示/理由/排序，不改統計）
+  const personal = useMemo(() => {
+    const seed = buildPersonalSeed({ favoriteLottery: state.lotteryType });
+    return {
+      tier: scoreToTier(dailyRec.confidence),
+      personality: getDailyPersonality(seed),
+      explanation: buildExplanation({ seed, selectedModules: [dailyRec.dominantSource] }),
+      session: getTodaySession(seed, 2),
+    };
+  }, [state.lotteryType, dailyRec.confidence, dailyRec.dominantSource]);
   
   // V18: 付費牆控制
   const role = getCurrentRole();
@@ -492,11 +503,12 @@ export default function HomePage() {
             </div>
           )}
 
-          {/* 信心度 + 主導來源 + 理由 */}
+          {/* 推薦等級 + 主導來源 + 理由 */}
           <div className="grid grid-cols-3 gap-2 text-center">
             <div className="bg-gray-900/50 rounded p-2">
-              <div className="text-xs text-gray-500">信心度</div>
-              <div className="text-sm font-bold text-purple-400">{dailyRec.confidence}分</div>
+              <div className="text-xs text-gray-500">推薦等級</div>
+              <div className="text-sm font-bold text-purple-400">{personal.tier.stars}</div>
+              <div className="text-[10px] text-purple-300">{personal.tier.label}</div>
             </div>
             <div className="bg-gray-900/50 rounded p-2">
               <div className="text-xs text-gray-500">主導來源</div>
@@ -520,6 +532,23 @@ export default function HomePage() {
             </div>
           </div>
           <p className="mt-2 text-[10px] leading-relaxed text-gray-500">{dailyRec.riskNote}</p>
+
+          {/* V19 Sprint-4: AI 人格 + 解釋卡 + 今日 session（個人化，娛樂分析） */}
+          <div className="mt-3 rounded-lg border border-purple-900/40 bg-purple-950/15 p-3">
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300">今日 AI 人格</span>
+              <span className="text-xs font-bold text-purple-200">{personal.personality.name}</span>
+              <span className="text-[10px] text-gray-500">{personal.personality.tone}</span>
+            </div>
+            <p className="text-xs text-gray-300 leading-relaxed whitespace-pre-line">{personal.explanation}</p>
+            {personal.session.length > 0 && (
+              <ul className="mt-2 space-y-1">
+                {personal.session.map((s, i) => (
+                  <li key={i} className="text-[11px] text-cyan-300/80">· {s}</li>
+                ))}
+              </ul>
+            )}
+          </div>
 
           {/* 驗證中心入口 */}
           <div className="flex gap-2 mt-3">

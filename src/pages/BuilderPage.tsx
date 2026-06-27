@@ -11,6 +11,7 @@ import { ChevronLeft, ChevronRight, SkipForward, RotateCcw, Sparkles } from 'luc
 import StepIndicator, { BUILDER_STEPS } from '@/components/builder/StepIndicator';
 import type { LotteryType } from '@/utils/lotteryConfig';
 import { userGetJson, userSetJson } from '@/utils/userStorage';
+import { recordPreference, recordCollectionHistory } from '@/utils/personalProfile';
 // V16-2: 統計整合（只呼叫既有 statistics.ts）
 import { runBuilderStatistics, buildBaseNumberPool, type BuilderStatsResult, type BaseNumberPool } from '@/utils/builderStats';
 // V16-3: 夢境/生日 疊加（只呼叫既有 dream/personalNumber 引擎）
@@ -111,6 +112,9 @@ export default function BuilderPage() {
       note: ['由打造流程產生', special].filter(Boolean).join('・'),
     };
     userSetJson(KEY, [newSet, ...existing]);
+    // V19 Sprint-4: 記錄偏好記憶 + 收藏歷史（localStorage，不建後端）
+    recordPreference({ lottery: lotteryType, collected: nums });
+    recordCollectionHistory(`${lotteryType} · ${nums.slice(0, 3).join(',')}…`);
     setSaveStatus('saved');
   };
   const [analysisLoading, setAnalysisLoading] = useState(false);
