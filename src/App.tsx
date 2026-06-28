@@ -39,6 +39,7 @@ import AIRecommendPage from '@/pages/AIRecommendPage';
 import PremiumAIPage from '@/pages/PremiumAIPage';
 import DataQualityPage from '@/pages/DataQualityPage';
 import SelectionAnalysisPage from '@/pages/SelectionAnalysisPage';
+import NotFoundPage from '@/pages/NotFoundPage';
 import DebugPanel from '@/components/DebugPanel';
 import { initializeDrawData } from '@/utils/drawSync';
 import { autoSyncOnStartup } from '@/utils/drawSyncScheduler';
@@ -168,8 +169,15 @@ function App() {
           <Route path="/ai-recommend" element={<AIRecommendPage />} />
           <Route path="/premium-ai" element={<PremiumAIPage />} />
           <Route path="/data-quality" element={<DataQualityPage />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       );
+    }
+    // V26-B: 未知 URL 路徑 → 顯示 404,不再靜默回首頁。
+    // 狀態式導航(home/numbers/member/admin 等)一律使用根路徑 '/',不受此守衛影響;
+    // '/lp' 已在前面處理;V16 路由已在上方 return。
+    if (location.pathname !== '/' && !location.pathname.startsWith('/lp')) {
+      return <NotFoundPage />;
     }
     // 管理員後台（Batch 3b: 後端權威 admin；loading 時暫停判斷避免閃爍）
     if (page === 'admin' && authLoading) {
