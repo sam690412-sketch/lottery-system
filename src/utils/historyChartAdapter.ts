@@ -35,8 +35,12 @@ export interface NumberCount {
 }
 
 export interface AnalysisStatsInput {
-  /** 各號碼出現次數(熱門 / 冷門排行都用這個)。 */
+  /** 各號碼出現次數(熱門 / 冷門排行的「自動排序」來源,二選一)。 */
   numberFrequency?: NumberCount[];
+  /** 已預先排序好的熱門清單(由大到小)。提供時優先於 numberFrequency。 */
+  hotNumbers?: NumberCount[];
+  /** 已預先排序好的冷門清單(由小到大)。提供時優先於 numberFrequency。 */
+  coldNumbers?: NumberCount[];
   /** 尾數(0–9)出現次數。 */
   tailFrequency?: { tail: number; count: number }[];
   /** 奇偶總數。 */
@@ -74,26 +78,32 @@ function arr<T>(v: T[] | undefined): T[] {
  * 3. 各圖表轉換(輸入 stats → Chart Engine 型別)
  * ========================================================== */
 
-/** 1. 熱門號排行 → BarRankChart(由大到小,取前 topN)。 */
+/** 1. 熱門號排行 → BarRankChart(優先用預排 hotNumbers,否則由 numberFrequency 由大到小)。 */
 export function toHotNumbers(
   stats: AnalysisStatsInput,
   topN = 10,
 ): ChartPoint[] {
-  return arr(stats.numberFrequency)
-    .slice()
-    .sort((a, b) => b.count - a.count)
+  const src =
+    stats.hotNumbers ??
+    arr(stats.numberFrequency)
+      .slice()
+      .sort((a, b) => b.count - a.count);
+  return arr(src)
     .slice(0, topN)
     .map((n) => ({ label: pad2(n.number), value: n.count }));
 }
 
-/** 2. 冷門號排行 → BarRankChart(由小到大,取最少的 bottomN)。 */
+/** 2. 冷門號排行 → BarRankChart(優先用預排 coldNumbers,否則由 numberFrequency 由小到大)。 */
 export function toColdNumbers(
   stats: AnalysisStatsInput,
   bottomN = 10,
 ): ChartPoint[] {
-  return arr(stats.numberFrequency)
-    .slice()
-    .sort((a, b) => a.count - b.count)
+  const src =
+    stats.coldNumbers ??
+    arr(stats.numberFrequency)
+      .slice()
+      .sort((a, b) => a.count - b.count);
+  return arr(src)
     .slice(0, bottomN)
     .map((n) => ({ label: pad2(n.number), value: n.count }));
 }
@@ -230,26 +240,41 @@ export function isAnalysisDataEmpty(data: AnalysisChartData): boolean {
 /* ============================================================
  * 5. ⭐ 唯一對應點:把 statistics.ts 真實輸出 → AnalysisStatsInput
  * ──────────────────────────────────────────────────────────
- * 下面是「樣板」。請把 raw 換成你 statistics.ts 的真實型別,
- * 並把欄位對應好。這是全專案唯一需要改動的硬接點。
- * 若你的 statistics.ts 輸出剛好就是 AnalysisStatsInput 形狀,
- * 直接 return raw 即可。
+ * RawAnalysisStats 對齊 AnalysisCenterPage 既有計算結果:
+ *   - hot/cold 來自 calcHotCold(draws,'hot'|'cold',10)(HotColdItem[])
+ *   - tail     來自 calcTailAnalysis(draws)(TailItem[])
+ *   - oddEven  來自 calcOddEven(draws) 的 oddCount/evenCount
+ *   - bigSmall 來自 calcBigSmall(draws,threshold) 的 bigCount/smallCount
+ *   - sumSeries 由頁面用 draws 逐期主號加總衍生(statistics.ts 無逐期序列)
+ *   - month/year/weekday 由頁面 dateStats(Record)轉成的陣列
+ * 結構型別:HotColdItem / TailItem 帶有額外欄位(rank/rate),
+ * 但結構上相容 {number,count} / {tail,count},可直接傳入。
  * ========================================================== */
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function mapStatisticsToInput(raw: any): AnalysisStatsInput {
-  // 範例對應(請依實際欄位名修改):
-  // return {
-  //   numberFrequency: raw.numbers?.map((n) => ({ number: n.num, count: n.times })),
-  //   tailFrequency: raw.tails,
-  //   oddCount: raw.oddEven?.odd,
-  //   evenCount: raw.oddEven?.even,
-  //   bigCount: raw.bigSmall?.big,
-  //   smallCount: raw.bigSmall?.small,
-  //   sumTrend: raw.sumTrend,
-  //   monthDistribution: raw.byMonth,
-  //   yearDistribution: raw.byYear,
-  //   weekdayDistribution: raw.byWeekday,
-  // };
-  return (raw ?? {}) as AnalysisStatsInput;
+export interface RawAnalysisStats {
+  hot: NumberCount[];
+  cold: NumberCount[];
+  tail: { tail: number; count: number }[];
+  oddEven: { oddCount: number; evenCount: number };
+  bigSmall: { bigCount: number; smallCount: number };
+  sumSeries: { period: string; sum: number }[];
+  month: { month: number; count: number }[];
+  year: { year: number; count: number }[];
+  weekday: { weekday: number; count: number }[];
+}
+
+export function mapStatisticsToInput(raw: RawAnalysisStats): AnalysisStatsInput {
+  return {
+    hotNumbers: raw.hot,
+    coldNumbers: raw.cold,
+    tailFrequency: raw.tail,
+    oddCount: raw.oddEven.oddCount,
+    evenCount: raw.oddEven.evenCount,
+    bigCount: raw.bigSmall.bigCount,
+    smallCount: raw.bigSmall.smallCount,
+    sumTrend: raw.sumSeries,
+    monthDistribution: raw.month,
+    yearDistribution: raw.year,
+    weekdayDistribution: raw.weekday,
+  };
 }
