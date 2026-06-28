@@ -33,7 +33,7 @@ import {
   ChevronRight, AlertCircle, Zap, Lock, Brain, TrendingUp, Crown
 } from 'lucide-react';
 import { getDailyRecommendation } from '@/utils/backtest';
-import { buildPersonalSeed, scoreToTier, getDailyPersonality, buildExplanation, getTodaySession } from '@/utils/personalProfile';
+import { buildPersonalSeed, scoreToTier, getDailyPersonality, buildExplanation, getTodaySession, getLocalHistory } from '@/utils/personalProfile';
 import { trackEvent, trackHomeEntry } from '@/utils/analytics';
 import { trackFunnel } from '@/utils/funnelAnalytics';
 import { getABVariant, getUpgradeCTA, trackABClick } from '@/utils/abTest';
@@ -438,6 +438,57 @@ export default function HomePage() {
     <div className="space-y-6 pb-24">
       {/* V18.1.2 MODULE 1: UpgradeTriggerBanner - 條件觸發升級橫幅 */}
       {!isVIP && <UpgradeTriggerBanner />}
+
+      {/* V20 Phase 1: 今日 AI 建議（個人化首屏；彩種三選一 + 一句建議 + 大按鈕 + 最近動態） */}
+      <div className="rounded-2xl border border-purple-800/40 bg-gradient-to-b from-purple-950/30 to-transparent p-5">
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300">今日 AI 人格</span>
+          <span className="text-sm font-bold text-purple-200">{personal.personality.name}</span>
+          <span className="text-[10px] text-gray-500 ml-auto">{personal.tier.stars} {personal.tier.label}</span>
+        </div>
+        <h2 className="text-lg font-bold text-gray-100 mb-2">今天適合玩哪一種？</h2>
+        <div className="grid grid-cols-3 gap-2 mb-3">
+          {([['power','威力彩'],['lotto649','大樂透'],['daily539','今彩539']] as [LotteryType,string][]).map(([t, label]) => (
+            <button
+              key={t}
+              onClick={() => setState(s => ({ ...s, lotteryType: t }))}
+              className={`py-2 rounded-lg text-sm font-medium transition border ${state.lotteryType === t ? 'bg-purple-600 border-purple-500 text-white' : 'bg-gray-900/50 border-gray-700 text-gray-300 hover:border-purple-600/50'}`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        {/* 今日一句 AI 建議（依資料自動產生，娛樂分析，非中獎率） */}
+        <div className="rounded-lg bg-gray-900/40 border border-gray-800 p-3 mb-3">
+          <p className="text-xs text-cyan-300/90 leading-relaxed">{personal.session[0] || '今天先看看熱冷分布再決定。'}</p>
+          {personal.session[1] && (
+            <p className="mt-1.5 text-[11px] text-amber-300/80 leading-relaxed">AI 今日提醒：{personal.session[1]}</p>
+          )}
+        </div>
+        {/* 最大按鈕：開始打造 */}
+        <button
+          onClick={() => navigate('/builder')}
+          className="w-full py-3.5 bg-amber-500 hover:bg-amber-400 rounded-xl text-base font-bold text-gray-950 transition shadow-lg shadow-amber-500/20 active:scale-[0.98]"
+        >
+          開始打造我的號碼
+        </button>
+        {/* 最近收藏 / 最近分析 / 今日任務 */}
+        <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+          <button onClick={() => goToStatePage('numbers')} className="rounded-lg bg-gray-900/40 border border-gray-800 p-2 hover:border-amber-600/40">
+            <div className="text-[10px] text-gray-500">最近收藏</div>
+            <div className="text-xs text-gray-300 truncate">{getLocalHistory().collection[0]?.summary || '尚無'}</div>
+          </button>
+          <button onClick={() => navigate('/builder')} className="rounded-lg bg-gray-900/40 border border-gray-800 p-2 hover:border-amber-600/40">
+            <div className="text-[10px] text-gray-500">最近分析</div>
+            <div className="text-xs text-gray-300 truncate">{getLocalHistory().analysis[0]?.summary || '尚無'}</div>
+          </button>
+          <button onClick={() => goToStatePage('records')} className="rounded-lg bg-gray-900/40 border border-gray-800 p-2 hover:border-amber-600/40">
+            <div className="text-[10px] text-gray-500">今日任務</div>
+            <div className="text-xs text-gray-300 truncate">查看紀錄</div>
+          </button>
+        </div>
+        <p className="mt-2 text-[10px] text-gray-500 text-center">以上為娛樂分析，不代表中獎率。理性購買、量力而為。</p>
+      </div>
 
       {/* V16-6: 打造我的專屬號碼 — 第一屏主入口 */}
       <div className="rounded-2xl border border-amber-700/40 bg-gradient-to-b from-amber-950/30 to-transparent p-6 text-center">

@@ -11,7 +11,7 @@ import { ChevronLeft, ChevronRight, SkipForward, RotateCcw, Sparkles } from 'luc
 import StepIndicator, { BUILDER_STEPS } from '@/components/builder/StepIndicator';
 import type { LotteryType } from '@/utils/lotteryConfig';
 import { userGetJson, userSetJson } from '@/utils/userStorage';
-import { recordPreference, recordCollectionHistory } from '@/utils/personalProfile';
+import { recordPreference, recordCollectionHistory, buildPersonalSeed, buildExplanation, recordAnalysisHistory } from '@/utils/personalProfile';
 // V16-2: 統計整合（只呼叫既有 statistics.ts）
 import { runBuilderStatistics, buildBaseNumberPool, type BuilderStatsResult, type BaseNumberPool } from '@/utils/builderStats';
 // V16-3: 夢境/生日 疊加（只呼叫既有 dream/personalNumber 引擎）
@@ -31,7 +31,7 @@ interface StepContent {
 }
 
 const STEP_CONTENT: StepContent[] = [
-  { title: '先選你想玩的彩種', desc: '我們會依照彩種規則，幫你一步步打造號碼。', placeholder: '（在這裡選擇 威力彩 / 大樂透 / 今彩539）' },
+  { title: '今天想怎麼分析？先選一個彩種', desc: '選好彩種，我就一步一步陪你打造今天的號碼 —— 統計先打底，夢境、生日、命理你想加再加。', placeholder: '（在這裡選擇 威力彩 / 大樂透 / 今彩539）' },
   { title: '先用歷史資料建立基礎號碼池', desc: '系統會先看熱號、冷號與遺漏值，建立第一版號碼池。', placeholder: '（在這裡顯示統計分析與基礎號碼池）' },
   { title: '想加入夢境嗎？', desc: '例如夢見水、蛇、飛機，系統會把夢境轉成號碼影響。可以略過。', placeholder: '（在這裡輸入夢境並顯示影響的號碼）' },
   { title: '加入生日或紀念日', desc: '生日會變成你的個人號碼權重。可以略過。', placeholder: '（在這裡輸入生日資料並顯示影響的號碼）' },
@@ -115,6 +115,7 @@ export default function BuilderPage() {
     // V19 Sprint-4: 記錄偏好記憶 + 收藏歷史（localStorage，不建後端）
     recordPreference({ lottery: lotteryType, collected: nums });
     recordCollectionHistory(`${lotteryType} · ${nums.slice(0, 3).join(',')}…`);
+    recordAnalysisHistory(`${lotteryType} · ${(finalResult.sourceWeights || []).filter(w => w.pct > 0).map(w => w.label).join('+') || '統計'}`);
     setSaveStatus('saved');
   };
   const [analysisLoading, setAnalysisLoading] = useState(false);
@@ -627,6 +628,24 @@ export default function BuilderPage() {
                       </div>
                     ))}
                   </div>
+                </div>
+
+                {/* V21: Explain 故事 — 為什麼是這組號碼（娛樂分析，非中獎率） */}
+                <div className="rounded-lg border border-purple-900/40 bg-purple-950/15 p-3">
+                  <div className="text-xs font-bold text-purple-300 mb-1.5">為什麼是這組號碼</div>
+                  {(() => {
+                    const used = finalResult.sourceWeights.filter(w => w.pct > 0).map(w => w.label);
+                    return (
+                      <>
+                        <p className="text-xs text-gray-300 leading-relaxed mb-1">
+                          今天主要使用了：{used.length ? used.join('、') : '統計分析'}，所以為你產出上面這組號碼。
+                        </p>
+                        <p className="text-xs text-gray-300 leading-relaxed whitespace-pre-line">
+                          {buildExplanation({ seed: buildPersonalSeed({ favoriteLottery: lotteryType || 'power' }), selectedModules: used })}
+                        </p>
+                      </>
+                    );
+                  })()}
                 </div>
 
                 {/* 摘要 */}
