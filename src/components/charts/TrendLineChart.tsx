@@ -1,13 +1,19 @@
 /**
- * TrendLineChart.tsx
+ * TrendLineChart.tsx  (V23-E 可讀性修正)
  *
- * 折線(走勢)圖(V23 / Chart Engine)。純 SVG。
- * - 支援單序列或多序列。
- * - 主序列附淡橘色面積漸層。
- * - 自動格線與 X / Y 標籤。
+ * 折線(走勢)圖。純 SVG,但改為「量測容器寬度 → 以真實像素繪製」,
+ * 不再使用 preserveAspectRatio="none"(那會非等比拉伸、使座標文字變形/被切)。
+ *
+ * 可讀性重點:
+ * - 左軸留白 ≥ 48px、底部 ≥ 36px,Y 數字與 X 日期不會被切。
+ * - X 軸最多 4~6 個 tick,日期不重疊。
+ * - 折線左右內縮,不貼邊;上方留白,不貼頂。
+ * - 字級用真實 px,小螢幕仍可讀。
+ *
+ * props API 與先前完全相同。
  */
 
-import { memo, useId, useMemo } from 'react';
+import { memo, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { ChartCard } from './ChartCard';
 import { ChartLegend } from './ChartLegend';
 import {
@@ -15,7 +21,6 @@ import {
   buildLinePath,
   CHART_COLORS,
   colorAt,
-  DEFAULT_PADDING,
   defaultFormatLabel,
   defaultFormatValue,
   pointsToCoords,
@@ -37,7 +42,48 @@ export interface TrendLineChartProps extends BaseChartProps {
   yTicks?: number;
 }
 
-const VIEW_W = 600;
+/** 軸留白:left ≥ 48、bottom ≥ 36(含安全邊距)。 */
+const PAD = { top: 16, right: 18, bottom: 40, left: 52 };
+/** 折線繪圖區再內縮,避免貼邊。 */
+const PLOT_INSET = 6;
+/** X 軸最多顯示的 tick 數。 */
+const MAX_X_TICKS = 6;
+/** 尚未量到寬度前的後備寬度。 */
+const FALLBACK_WIDTH = 560;
+
+/** 量測容器實際寬度(隨 resize 更新),讓 SVG 用真實像素繪製。 */
+function useMeasuredWidth<T extends HTMLElement>() {
+  const ref = useRef<T | null>(null);
+  const [width, setWidth] = useState(0);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const update = () => setWidth(el.clientWidth);
+    update();
+    let ro: ResizeObserver | undefined;
+    if (typeof ResizeObserver !== 'undefined') {
+      ro = new ResizeObserver(update);
+      ro.observe(el);
+    } else if (typeof window !== 'undefined') {
+      window.addEventListener('resize', update);
+    }
+    return () => {
+      if (ro) ro.disconnect();
+      else if (typeof window !== 'undefined') window.removeEventListener('resize', update);
+    };
+  }, []);
+  return { ref, width };
+}
+
+/** 從 count 個點挑出最多 maxTicks 個、含頭尾、均勻分佈的索引。 */
+function pickTickIndices(count: number, maxTicks: number): number[] {
+  if (count <= 0) return [];
+  if (count === 1) return [0];
+  const n = Math.min(maxTicks, count);
+  const idx = new Set<number>();
+  for (let i = 0; i < n; i++) idx.add(Math.round((i * (count - 1)) / (n - 1)));
+  return Array.from(idx).sort((a, b) => a - b);
+}
 
 function TrendLineChartBase({
   data,
@@ -45,7 +91,7 @@ function TrendLineChartBase({
   subtitle,
   loading,
   empty,
-  height = 220,
+  height = 240,
   formatLabel = defaultFormatLabel,
   formatValue = defaultFormatValue,
   showLegend,
@@ -54,57 +100,51 @@ function TrendLineChartBase({
   className,
 }: TrendLineChartProps) {
   const gradientId = useId();
+  const { ref, width } = useMeasuredWidth<HTMLDivElement>();
+  const W = width || FALLBACK_WIDTH;
 
   const series = data ?? [];
   const isEmpty = empty ?? series.every((s) => s.points.length === 0);
   const legendOn = showLegend ?? series.length > 1;
 
   const view = useMemo(() => {
-    const VIEW_H = height;
-    const domain = seriesExtent(series);
-    // 給上下一點留白,避免線貼邊
-    const pad = (domain.max - domain.min) * 0.1 || 1;
-    const dom = { min: Math.min(domain.min, domain.min - pad * 0), max: domain.max + pad };
-    const baselineY = VIEW_H - DEFAULT_PADDING.bottom;
+    const H = height;
+    const ext = seriesExtent(series);
+    const span = ext.max - ext.min || 1;
+    const dom = { min: ext.min, max: ext.max + span * 0.1 }; // 上方留白,不貼頂
+    const baselineY = H - PAD.bottom;
+    const plotPad = {
+      ...PAD,
+      left: PAD.left + PLOT_INSET,
+      right: PAD.right + PLOT_INSET,
+    };
 
     const lines = series.map((s, i) => {
-      const coords = pointsToCoords(s.points, VIEW_W, VIEW_H, dom);
+      const coords = pointsToCoords(s.points, W, H, dom, plotPad);
       return {
         id: s.id,
         name: s.name,
         color: s.color ?? colorAt(i),
         linePath: buildLinePath(coords),
         areaPath: buildAreaPath(coords, baselineY),
-        coords,
       };
     });
 
     const yTickValues = Array.from({ length: yTicks + 1 }, (_, i) => {
       const v = dom.min + ((dom.max - dom.min) * i) / yTicks;
-      const y =
-        DEFAULT_PADDING.top +
-        (VIEW_H - DEFAULT_PADDING.top - DEFAULT_PADDING.bottom) *
-          (1 - i / yTicks);
+      const y = PAD.top + (H - PAD.top - PAD.bottom) * (1 - i / yTicks);
       return { v, y };
     });
 
-    // X 標籤:取主序列的 label,過多時抽樣
-    const main = series[0];
-    const xLabels =
-      main?.points.map((p, i) => {
-        const x = scaleLinear(
-          i,
-          0,
-          Math.max(1, main.points.length - 1),
-          DEFAULT_PADDING.left,
-          VIEW_W - DEFAULT_PADDING.right,
-        );
-        return { label: p.label, x };
-      }) ?? [];
-    const step = Math.ceil(xLabels.length / 6) || 1;
+    const pts = series[0]?.points ?? [];
+    const last = Math.max(1, pts.length - 1);
+    const xTicks = pickTickIndices(pts.length, MAX_X_TICKS).map((i) => ({
+      label: pts[i]?.label ?? '',
+      x: scaleLinear(i, 0, last, plotPad.left, W - plotPad.right),
+    }));
 
-    return { VIEW_H, lines, yTickValues, xLabels, step, baselineY };
-  }, [series, height, yTicks]);
+    return { H, lines, yTickValues, xTicks };
+  }, [series, W, height, yTicks]);
 
   const legendItems: LegendItem[] = view.lines.map((l) => ({
     label: l.name,
@@ -121,79 +161,77 @@ function TrendLineChartBase({
       className={className}
       footer={legendOn ? <ChartLegend items={legendItems} /> : undefined}
     >
-      <svg
-        viewBox={`0 0 ${VIEW_W} ${view.VIEW_H}`}
-        width="100%"
-        height={height}
-        preserveAspectRatio="none"
-        role="img"
-        aria-label={title ?? '折線圖'}
-      >
-        <defs>
-          <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={view.lines[0]?.color ?? '#f97316'} stopOpacity="0.28" />
-            <stop offset="100%" stopColor={view.lines[0]?.color ?? '#f97316'} stopOpacity="0" />
-          </linearGradient>
-        </defs>
+      <div ref={ref} className="w-full">
+        <svg
+          width={W}
+          height={height}
+          viewBox={`0 0 ${W} ${height}`}
+          role="img"
+          aria-label={title ?? '折線圖'}
+          style={{ display: 'block', maxWidth: '100%' }}
+        >
+          <defs>
+            <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={view.lines[0]?.color ?? '#f97316'} stopOpacity="0.28" />
+              <stop offset="100%" stopColor={view.lines[0]?.color ?? '#f97316'} stopOpacity="0" />
+            </linearGradient>
+          </defs>
 
-        {/* Y 格線 + 數值 */}
-        {view.yTickValues.map((t, i) => (
-          <g key={`y-${i}`}>
-            <line
-              x1={DEFAULT_PADDING.left}
-              y1={t.y}
-              x2={VIEW_W - DEFAULT_PADDING.right}
-              y2={t.y}
-              stroke={CHART_COLORS.grid}
-              strokeWidth={1}
+          {/* Y 格線 + 數值(在左側留白內,不被切) */}
+          {view.yTickValues.map((t, i) => (
+            <g key={`y-${i}`}>
+              <line
+                x1={PAD.left}
+                y1={t.y}
+                x2={W - PAD.right}
+                y2={t.y}
+                stroke={CHART_COLORS.grid}
+                strokeWidth={1}
+              />
+              <text
+                x={PAD.left - 8}
+                y={t.y}
+                textAnchor="end"
+                dominantBaseline="middle"
+                fontSize={11}
+                fill={CHART_COLORS.textMuted}
+              >
+                {formatValue(t.v)}
+              </text>
+            </g>
+          ))}
+
+          {showArea && view.lines[0] ? (
+            <path d={view.lines[0].areaPath} fill={`url(#${gradientId})`} />
+          ) : null}
+
+          {view.lines.map((l) => (
+            <path
+              key={l.id}
+              d={l.linePath}
+              fill="none"
+              stroke={l.color}
+              strokeWidth={2}
+              strokeLinejoin="round"
+              strokeLinecap="round"
             />
-            <text
-              x={DEFAULT_PADDING.left - 6}
-              y={t.y}
-              textAnchor="end"
-              dominantBaseline="middle"
-              fontSize={10}
-              fill={CHART_COLORS.textMuted}
-            >
-              {formatValue(t.v)}
-            </text>
-          </g>
-        ))}
+          ))}
 
-        {/* 面積(僅主序列) */}
-        {showArea && view.lines[0] ? (
-          <path d={view.lines[0].areaPath} fill={`url(#${gradientId})`} />
-        ) : null}
-
-        {/* 折線 */}
-        {view.lines.map((l) => (
-          <path
-            key={l.id}
-            d={l.linePath}
-            fill="none"
-            stroke={l.color}
-            strokeWidth={2}
-            strokeLinejoin="round"
-            strokeLinecap="round"
-          />
-        ))}
-
-        {/* X 標籤 */}
-        {view.xLabels
-          .filter((_, i) => i % view.step === 0)
-          .map((xl, i) => (
+          {/* X 標籤(最多 4~6 個,不重疊) */}
+          {view.xTicks.map((xt, i) => (
             <text
               key={`x-${i}`}
-              x={xl.x}
-              y={view.VIEW_H - 8}
+              x={xt.x}
+              y={view.H - 12}
               textAnchor="middle"
-              fontSize={10}
+              fontSize={11}
               fill={CHART_COLORS.textMuted}
             >
-              {formatLabel(xl.label)}
+              {formatLabel(xt.label)}
             </text>
           ))}
-      </svg>
+        </svg>
+      </div>
     </ChartCard>
   );
 }

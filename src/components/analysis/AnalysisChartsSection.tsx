@@ -13,6 +13,7 @@
 import { memo, useMemo } from 'react';
 import {
   BarRankChart,
+  ChartCard,
   RatioDonutChart,
   TrendLineChart,
 } from '../charts';
@@ -30,12 +31,25 @@ export interface AnalysisChartsSectionProps {
   topN?: number;
   /** 冷門取後幾名。 */
   bottomN?: number;
-  /** 年份分析改用長條(預設用折線)。 */
+  /** 年份分析改用長條(預設依資料量自動選擇)。 */
   yearAsBar?: boolean;
   className?: string;
 }
 
 const formatTimes = (v: number): string => `${v} 次`;
+/** Y 軸整數格式(避免被切掉的小數)。 */
+const formatInt = (v: number): string => String(Math.round(v));
+/** X 軸短日期:2024-06-23 → 06/23;無法解析則原樣。 */
+const shortDate = (s: string): string => {
+  const d = new Date(s);
+  if (Number.isNaN(d.getTime())) return s;
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${mm}/${dd}`;
+};
+/** 年份折線至少需要的年數,低於此改用長條;再低則顯示資料不足。 */
+const YEAR_MIN_FOR_LINE = 4;
+const YEAR_MIN_FOR_BAR = 2;
 
 function AnalysisChartsSectionBase({
   stats,
@@ -53,7 +67,7 @@ function AnalysisChartsSectionBase({
   const allEmpty = !loading && isAnalysisDataEmpty(data);
 
   return (
-    <section className={`flex flex-col gap-4 pb-28 ${className}`}>
+    <section className={`flex flex-col gap-4 pb-32 ${className}`}>
       {/* 區塊標題 + 娛樂說明(小型,不突出) */}
       <header className="space-y-1">
         <h2 className="text-base font-semibold text-neutral-100">歷史統計圖表</h2>
@@ -138,33 +152,53 @@ function AnalysisChartsSectionBase({
             formatValue={formatTimes}
           />
 
-          {/* 8. 年份分析 */}
-          {yearAsBar ? (
-            <BarRankChart
-              title="年份分析"
-              subtitle="各年份開出次數"
-              data={data.year[0]?.points ?? []}
-              loading={loading}
-              sort={false}
-              formatValue={formatTimes}
-            />
-          ) : (
-            <TrendLineChart
-              title="年份分析"
-              subtitle="各年份開出次數走勢"
-              data={data.year}
-              loading={loading}
-              formatValue={formatTimes}
-            />
-          )}
+          {/* 8. 年份分析:依年數自動選擇,避免出現奇怪的空折線 */}
+          {(() => {
+            const yearPoints = data.year[0]?.points ?? [];
+            if (yearPoints.length < YEAR_MIN_FOR_BAR) {
+              return (
+                <ChartCard
+                  title="年份分析"
+                  subtitle="各年份開出次數"
+                  empty
+                  emptyMessage="資料不足"
+                  emptyHint="需更多年份資料"
+                />
+              );
+            }
+            if (yearAsBar || yearPoints.length < YEAR_MIN_FOR_LINE) {
+              return (
+                <BarRankChart
+                  title="年份分析"
+                  subtitle="各年份開出次數"
+                  data={yearPoints}
+                  loading={loading}
+                  sort={false}
+                  formatValue={formatTimes}
+                />
+              );
+            }
+            return (
+              <TrendLineChart
+                title="年份分析"
+                subtitle="各年份開出次數走勢"
+                data={data.year}
+                loading={loading}
+                formatValue={formatInt}
+              />
+            );
+          })()}
 
-          {/* 6. 和值趨勢(整列寬) */}
+          {/* 6. 和值趨勢(獨立整列、加高、短日期、整數 Y 軸) */}
           <div className="lg:col-span-2">
             <TrendLineChart
               title="和值趨勢"
               subtitle="各期和值走勢"
               data={data.sumTrend}
               loading={loading}
+              height={320}
+              formatLabel={shortDate}
+              formatValue={formatInt}
             />
           </div>
         </div>

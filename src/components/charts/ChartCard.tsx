@@ -89,7 +89,7 @@ function ChartCardBase({
         </header>
       ) : null}
 
-      <div className="relative w-full" style={{ minHeight: height }}>
+      <div className="relative w-full overflow-visible pb-1" style={{ minHeight: height }}>
         {loading ? (
           <LoadingSkeleton height={height} />
         ) : empty ? (
