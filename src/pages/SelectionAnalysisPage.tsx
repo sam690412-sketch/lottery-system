@@ -17,6 +17,13 @@ import {
   scoreSelection,
   type SelectionScoreResult,
 } from '@/utils/selectionScoreEngine';
+import {
+  loadRecentAnalysis,
+  addRecentAnalysis,
+  clearRecentAnalysis,
+  type RecentAnalysisRecord,
+} from '@/utils/recentAnalysisStore';
+import RecentAnalysisHistory from '@/components/selection/RecentAnalysisHistory';
 
 const GAMES: [LotteryType, string][] = [
   ['power', '威力彩'],
@@ -61,20 +68,38 @@ export default function SelectionAnalysisPage() {
   const [range, setRange] = useState<AnalysisRange>(300);
   const [input, setInput] = useState('05 08 12 21 31 36');
   const [result, setResult] = useState<SelectionScoreResult | null>(null);
+  const [recent, setRecent] = useState<RecentAnalysisRecord[]>(() => loadRecentAnalysis());
+  const [meta, setMeta] = useState<{ date?: string; note?: string }>({});
 
   const numbers = useMemo(() => parseNumbers(input), [input]);
 
   const runAnalysis = (g: LotteryType, r: AnalysisRange, nums: number[]) => {
     const history = getByRange(g, r).map((d) => ({ mainNumbers: d.zone1 }));
-    setResult(scoreSelection({ lotteryType: g, numbers: nums, history }));
+    const res = scoreSelection({ lotteryType: g, numbers: nums, history });
+    setResult(res);
+    if (nums.length > 0) {
+      setRecent(
+        addRecentAnalysis({
+          time: Date.now(),
+          lotteryType: g,
+          numbers: nums,
+          overallScore: res.overallScore,
+        }),
+      );
+    }
   };
 
-  // 支援 query param 自動分析:/selection-analysis?game=power&numbers=5,8,12
+  const handleClearRecent = () => setRecent(clearRecentAnalysis());
+
+  // 支援 query param 自動分析:/selection-analysis?game=power&numbers=5,8,12&date=...&note=...
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const q = new URLSearchParams(window.location.search);
     const qNums = q.get('numbers');
     const qGame = q.get('game') as LotteryType | null;
+    const qDate = q.get('date') ?? undefined;
+    const qNote = q.get('note') ?? undefined;
+    if (qDate || qNote) setMeta({ date: qDate, note: qNote });
     if (qGame && GAMES.some(([g]) => g === qGame)) setGame(qGame);
     if (qNums) {
       const nums = parseNumbers(qNums);
@@ -154,6 +179,14 @@ export default function SelectionAnalysisPage() {
         {numbers.length > 0 ? `:${numbers.map((n) => String(n).padStart(2, '0')).join(' ')}` : ''}
       </p>
 
+      {meta.date || meta.note ? (
+        <div className="rounded-lg border border-neutral-800 bg-neutral-900/60 px-3 py-2 text-xs text-neutral-400">
+          來自收藏
+          {meta.date ? ` · 收藏日期 ${meta.date}` : ''}
+          {meta.note ? ` · 備註:${meta.note}` : ''}
+        </div>
+      ) : null}
+
       {result ? (
         <>
           {/* 整體評分 */}
@@ -195,6 +228,9 @@ export default function SelectionAnalysisPage() {
           </div>
         </>
       ) : null}
+
+      {/* 最近分析(localStorage,最多 20 筆) */}
+      <RecentAnalysisHistory records={recent} onClear={handleClearRecent} />
 
       <p className="px-4 text-center text-[11px] text-neutral-600">
         以上為歷史統計整理,僅供娛樂分析,非投注建議。理性購買、量力而為。

@@ -24,6 +24,19 @@ interface KeepSet {
 
 const STORAGE_KEY = 'v12-keep-sets';
 
+/** 由收藏組建立 /selection-analysis 連結,帶入彩種、號碼、日期(由 id 反推)、備註。 */
+function buildAnalysisHref(set: KeepSet): string {
+  const params = new URLSearchParams();
+  params.set('game', set.type);
+  params.set('numbers', set.numbers.join(','));
+  if (set.note) params.set('note', set.note);
+  const ts = Number(set.id);
+  if (Number.isFinite(ts) && ts > 1e12) {
+    params.set('date', new Date(ts).toISOString().slice(0, 10));
+  }
+  return `/selection-analysis?${params.toString()}`;
+}
+
 export default function MyNumbersPage() {
   const [lotteryType, setLotteryType] = useState<LotteryType>('power');
   const [keepSets, setKeepSets] = useState<KeepSet[]>(() => userGetJson(STORAGE_KEY, []));
@@ -147,9 +160,17 @@ export default function MyNumbersPage() {
                   </div>
                   {set.note && <p className="text-xs text-gray-500 mt-1">{set.note}</p>}
                 </div>
-                <button onClick={() => deleteSet(set.id)} className="text-gray-600 hover:text-red-400 transition">
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                <div className="flex flex-col items-end gap-2 shrink-0">
+                  <a
+                    href={buildAnalysisHref(set)}
+                    className="inline-flex items-center justify-center rounded-lg border border-orange-500/40 bg-orange-500/10 px-3 py-1 text-xs font-medium text-orange-300 transition-colors hover:bg-orange-500/20"
+                  >
+                    分析
+                  </a>
+                  <button onClick={() => deleteSet(set.id)} className="text-gray-600 hover:text-red-400 transition">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             </CardContent>
           </Card>
