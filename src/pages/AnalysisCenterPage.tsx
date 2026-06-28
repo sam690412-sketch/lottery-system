@@ -81,21 +81,16 @@ export default function AnalysisCenterPage() {
         <p className="text-sm text-gray-500">沿用統計引擎 + 可切換分析區間。以下為統計整理，僅供娛樂分析，非投注建議。</p>
       </div>
 
-      {/* V25-E：資料來源徽章(頂部強化提示;依目前彩種顯示驗證狀態) */}
+      {/* V25-G：資料來源徽章(統一 props + mode) */}
       <DataSourceBadge
         sourceKind={getDataSourceKind()}
-        totalCount={summary.count}
-        dateFrom={gameValidation?.dateRange.from ?? null}
-        dateTo={gameValidation?.dateRange.to ?? null}
+        validation={gameValidation?.summary.severity ?? 'yellow'}
+        totalRecords={summary.count}
+        dateRange={gameValidation?.dateRange ?? { from: null, to: null }}
         latestDate={summary.latestDate}
+        mode="analysis"
         updatedAt={summary.updatedAt}
-        severity={gameValidation?.summary.severity ?? 'yellow'}
       />
-
-      {/* 資料概況（Part 9） */}
-      <div className="rounded-lg border border-cyan-900/40 bg-cyan-950/15 px-3 py-2 text-xs text-cyan-200/80">
-        目前已分析：{summary.count} 期 · 最新：{summary.latestDate || '—'} · 來源：{getDataSourceKind() === 'official' ? '官方' : '示意資料（非官方開獎）'}
-      </div>
 
       {/* 彩種 + 區間切換 */}
       <div className="flex flex-wrap gap-2">

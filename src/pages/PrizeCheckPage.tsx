@@ -7,6 +7,8 @@ import type { LotteryType } from '@/utils/lotteryConfig';
 import { getHistoryByGame } from '@/utils/historyEngine';
 import { checkPrize, type PrizeCheckResult } from '@/utils/prizeAndReport';
 import { getDataSourceKind } from '@/providers/historyProvider';
+import { validateAllBuiltInHistory } from '@/utils/historyValidation';
+import DataSourceBadge from '@/components/data/DataSourceBadge';
 
 const GAMES: [LotteryType, string][] = [['power', '威力彩'], ['lotto649', '大樂透'], ['daily539', '今彩539']];
 interface KeepSet { id: string; name: string; numbers: number[]; type: LotteryType; note: string }
@@ -27,6 +29,10 @@ export default function PrizeCheckPage() {
   const collections = useMemo(() => loadCollections(game), [game]);
   const targetIssue = issue ?? issues[0] ?? null;
 
+  // V25-G：資料來源 / 驗證狀態(內建資料,只算一次);依目前彩種取狀態
+  const validations = useMemo(() => validateAllBuiltInHistory(), []);
+  const gv = validations[game];
+
   const parseInput = (s: string): number[] => s.split(/[\s,，、]+/).map(x => parseInt(x.trim(), 10)).filter(n => !isNaN(n));
 
   const runCheck = (nums: number[]) => {
@@ -44,6 +50,16 @@ export default function PrizeCheckPage() {
         <h1 className="text-2xl font-bold text-gray-100">兌獎中心</h1>
         <p className="text-sm text-gray-500">比對你的號碼與開獎結果。{getDataSourceKind() !== 'official' && '（目前為示意資料，請以官方開獎為準）'}</p>
       </div>
+
+      {/* V25-G：資料可信度徽章(統一文案,mode=prize) */}
+      <DataSourceBadge
+        sourceKind={getDataSourceKind()}
+        validation={gv?.summary.severity ?? 'yellow'}
+        totalRecords={gv?.totalRecords ?? 0}
+        dateRange={gv?.dateRange ?? { from: null, to: null }}
+        latestDate={gv?.dateRange.to ?? null}
+        mode="prize"
+      />
 
       {/* 選彩種 */}
       <div className="flex flex-wrap gap-2">
