@@ -24,6 +24,7 @@ import {
   type RecentAnalysisRecord,
 } from '@/utils/recentAnalysisStore';
 import RecentAnalysisHistory from '@/components/selection/RecentAnalysisHistory';
+import SelectionReportCard from '@/components/selection/SelectionReportCard';
 
 const GAMES: [LotteryType, string][] = [
   ['power', '威力彩'],
@@ -227,6 +228,16 @@ export default function SelectionAnalysisPage() {
             </ul>
           </div>
         </>
+      ) : null}
+
+      {/* AI 選號分析報告(由當前結果即時計算) */}
+      {result ? (
+        <SelectionReportCard
+          lotteryType={game}
+          numbers={numbers}
+          scoreResult={result}
+          sourceMeta={meta.date || meta.note ? meta : undefined}
+        />
       ) : null}
 
       {/* 最近分析(localStorage,最多 20 筆) */}
