@@ -38,6 +38,7 @@ import TrendPage from '@/pages/TrendPage';
 import AIRecommendPage from '@/pages/AIRecommendPage';
 import PremiumAIPage from '@/pages/PremiumAIPage';
 import DataQualityPage from '@/pages/DataQualityPage';
+import SelectionAnalysisPage from '@/pages/SelectionAnalysisPage';
 import DebugPanel from '@/components/DebugPanel';
 import { initializeDrawData } from '@/utils/drawSync';
 import { autoSyncOnStartup } from '@/utils/drawSyncScheduler';
@@ -129,7 +130,7 @@ function App() {
 
   const location = useLocation();
   const navigate = useNavigate();
-  const isV16Route = location.pathname.startsWith('/builder') || location.pathname.startsWith('/combine') || location.pathname.startsWith('/analysis') || location.pathname.startsWith('/combine-analysis') || location.pathname.startsWith('/verify') || location.pathname.startsWith('/backtest') || location.pathname.startsWith('/xuanxue') || location.pathname.startsWith('/vip') || location.pathname.startsWith('/vip-value') || location.pathname.startsWith('/vip-roi') || location.pathname.startsWith('/dashboard') || location.pathname.startsWith('/ai-analysis') || location.pathname.startsWith('/live') || location.pathname.startsWith('/trend') || location.pathname.startsWith('/ai-recommend') || location.pathname.startsWith('/premium-ai') || location.pathname.startsWith('/data-quality') || location.pathname.startsWith('/prize-check') || location.pathname.startsWith('/analysis-center');
+  const isV16Route = location.pathname.startsWith('/builder') || location.pathname.startsWith('/combine') || location.pathname.startsWith('/analysis') || location.pathname.startsWith('/combine-analysis') || location.pathname.startsWith('/verify') || location.pathname.startsWith('/backtest') || location.pathname.startsWith('/xuanxue') || location.pathname.startsWith('/vip') || location.pathname.startsWith('/vip-value') || location.pathname.startsWith('/vip-roi') || location.pathname.startsWith('/dashboard') || location.pathname.startsWith('/ai-analysis') || location.pathname.startsWith('/live') || location.pathname.startsWith('/trend') || location.pathname.startsWith('/ai-recommend') || location.pathname.startsWith('/premium-ai') || location.pathname.startsWith('/data-quality') || location.pathname.startsWith('/prize-check') || location.pathname.startsWith('/analysis-center') || location.pathname.startsWith('/selection-analysis');
 
   const renderPage = () => {
     // PHASE 24: 娛樂版 Landing（/lp 隔離路由，不依賴登入/權限/quota）
@@ -142,6 +143,7 @@ function App() {
         <Routes>
           <Route path="/builder" element={<BuilderPage />} />
           <Route path="/analysis-center" element={<AnalysisCenterPage />} />
+          <Route path="/selection-analysis" element={<SelectionAnalysisPage />} />
           <Route path="/prize-check" element={<PrizeCheckPage />} />
           <Route path="/combine/:lotteryType" element={<CombineLotteryPage />} />
           <Route path="/combine/49" element={<CombineLotteryPage forcedType="lotto49c" />} />
