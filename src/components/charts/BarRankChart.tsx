@@ -10,13 +10,15 @@ import { memo, useMemo } from 'react';
 import { ChartCard } from './ChartCard';
 import {
   CHART_ACCENT,
-  colorAt,
   defaultFormatLabel,
   defaultFormatValue,
   extent,
   type BaseChartProps,
   type ChartPoint,
 } from '../../utils/chartTransform';
+
+/** 橘色系深淺(取代彩虹色票):由深到淺,維持同一色系。 */
+const ORANGE_SCALE = ['#ea580c', '#f97316', '#fb923c', '#fdba74', '#fed7aa'];
 
 export interface BarRankChartProps extends BaseChartProps {
   data: ChartPoint[];
@@ -50,7 +52,7 @@ function BarRankChartBase({
     return list.map((d, i) => ({
       ...d,
       pct: max === 0 ? 0 : Math.max(2, (d.value / max) * 100),
-      color: colorful ? colorAt(i) : CHART_ACCENT,
+      color: colorful ? ORANGE_SCALE[i % ORANGE_SCALE.length] : CHART_ACCENT,
     }));
   }, [data, sort, maxItems, colorful]);
 
@@ -66,21 +68,24 @@ function BarRankChartBase({
       className={className}
     >
       <div
-        className="flex flex-col gap-2 overflow-y-auto pr-1"
+        className="flex flex-col gap-2.5 overflow-y-auto pr-0.5"
         style={{ maxHeight: height }}
       >
         {rows.map((r, i) => (
-          <div key={`${r.label}-${i}`} className="flex items-center gap-3">
-            <span className="w-12 shrink-0 truncate text-right text-xs font-medium text-neutral-400">
+          <div
+            key={`${r.label}-${i}`}
+            className="flex items-center gap-2 sm:gap-3"
+          >
+            <span className="w-10 shrink-0 truncate text-right text-xs font-medium tabular-nums text-neutral-400 sm:w-12">
               {formatLabel(r.label)}
             </span>
-            <div className="relative h-6 flex-1 overflow-hidden rounded-md bg-neutral-800/60">
+            <div className="relative h-7 min-w-0 flex-1 overflow-hidden rounded-md bg-neutral-800/50">
               <div
                 className="h-full rounded-md transition-[width] duration-500 ease-out"
                 style={{ width: `${r.pct}%`, backgroundColor: r.color }}
               />
             </div>
-            <span className="w-12 shrink-0 text-right text-xs font-semibold tabular-nums text-neutral-200">
+            <span className="w-14 shrink-0 text-right text-xs font-semibold tabular-nums text-neutral-200 sm:w-16">
               {formatValue(r.value)}
             </span>
           </div>

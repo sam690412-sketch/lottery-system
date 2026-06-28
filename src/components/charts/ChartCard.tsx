@@ -71,18 +71,18 @@ function ChartCardBase({
 
   return (
     <section
-      className={`rounded-2xl border border-neutral-800 bg-neutral-900/80 p-4 ${className}`}
+      className={`rounded-2xl border border-white/[0.06] bg-neutral-900 p-5 ${className}`}
     >
       {hasHeader ? (
-        <header className="mb-3 flex items-start justify-between gap-3">
+        <header className="mb-4 flex items-start justify-between gap-3">
           <div className="min-w-0">
             {title ? (
-              <h3 className="truncate text-sm font-semibold text-neutral-100">
+              <h3 className="truncate text-sm font-semibold leading-tight text-neutral-100">
                 {title}
               </h3>
             ) : null}
             {subtitle ? (
-              <p className="mt-0.5 truncate text-xs text-neutral-500">{subtitle}</p>
+              <p className="mt-1 truncate text-xs text-neutral-500">{subtitle}</p>
             ) : null}
           </div>
           {actions ? <div className="shrink-0">{actions}</div> : null}
@@ -104,7 +104,7 @@ function ChartCardBase({
       </div>
 
       {footer && !loading && !empty ? (
-        <footer className="mt-3 border-t border-neutral-800/80 pt-3">{footer}</footer>
+        <footer className="mt-4 border-t border-white/[0.06] pt-3">{footer}</footer>
       ) : null}
     </section>
   );

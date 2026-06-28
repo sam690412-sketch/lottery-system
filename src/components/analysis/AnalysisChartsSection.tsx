@@ -53,17 +53,17 @@ function AnalysisChartsSectionBase({
   const allEmpty = !loading && isAnalysisDataEmpty(data);
 
   return (
-    <section className={`flex flex-col gap-4 ${className}`}>
-      {/* 區塊標題 + 娛樂用途標示 */}
-      <header className="flex items-center justify-between">
+    <section className={`flex flex-col gap-4 pb-28 ${className}`}>
+      {/* 區塊標題 + 娛樂說明(小型,不突出) */}
+      <header className="space-y-1">
         <h2 className="text-base font-semibold text-neutral-100">歷史統計圖表</h2>
-        <span className="rounded-full border border-orange-500/40 bg-orange-500/10 px-2.5 py-0.5 text-[11px] font-medium text-orange-300">
-          娛樂用途
-        </span>
+        <p className="text-xs leading-relaxed text-neutral-500">
+          以下圖表為歷史資料統計，僅供娛樂參考，不代表中獎率。
+        </p>
       </header>
 
       {allEmpty ? (
-        <div className="rounded-2xl border border-neutral-800 bg-neutral-900/80 p-8">
+        <div className="rounded-2xl border border-white/[0.06] bg-neutral-900 p-8">
           <p className="text-center text-sm text-neutral-400">
             資料不足,無法產生統計圖表
           </p>
@@ -79,7 +79,6 @@ function AnalysisChartsSectionBase({
             subtitle="出現次數較多的號碼"
             data={data.hot}
             loading={loading}
-            colorful
             formatValue={formatTimes}
           />
 
