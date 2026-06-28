@@ -12,6 +12,8 @@ import type { SelectionScoreResult } from '@/utils/selectionScoreEngine';
 import {
   generateSelectionReport,
   exportSelectionReportAsText,
+  downloadSelectionReportText,
+  downloadSelectionReportHtml,
   type SelectionSourceMeta,
 } from '@/utils/selectionReportEngine';
 
@@ -49,8 +51,14 @@ function SelectionReportCardBase({
 
   const [copied, setCopied] = useState(false);
 
+  const exportCtx = {
+    lotteryType,
+    numbers,
+    overallScore: scoreResult.overallScore,
+  };
+
   const handleCopy = async () => {
-    const text = exportSelectionReportAsText(report);
+    const text = exportSelectionReportAsText(report, exportCtx);
     try {
       if (typeof navigator !== 'undefined' && navigator.clipboard) {
         await navigator.clipboard.writeText(text);
@@ -65,6 +73,14 @@ function SelectionReportCardBase({
     }
   };
 
+  const handleDownloadTxt = () => {
+    downloadSelectionReportText(report, exportCtx);
+  };
+
+  const handleDownloadHtml = () => {
+    downloadSelectionReportHtml(report, exportCtx);
+  };
+
   return (
     <div className={`rounded-2xl border border-white/[0.06] bg-neutral-900 p-4 ${className}`}>
       {/* 標題列 */}
@@ -75,12 +91,26 @@ function SelectionReportCardBase({
             產生時間 {new Date(report.generatedAt).toLocaleString()}
           </p>
         </div>
-        <button
-          onClick={handleCopy}
-          className="shrink-0 rounded-lg border border-orange-500/40 bg-orange-500/10 px-3 py-1 text-xs font-medium text-orange-300 transition-colors hover:bg-orange-500/20"
-        >
-          {copied ? '已複製' : '複製報告'}
-        </button>
+        <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
+          <button
+            onClick={handleCopy}
+            className="rounded-lg border border-orange-500/40 bg-orange-500/10 px-3 py-1 text-xs font-medium text-orange-300 transition-colors hover:bg-orange-500/20"
+          >
+            {copied ? '已複製' : '複製報告'}
+          </button>
+          <button
+            onClick={handleDownloadTxt}
+            className="rounded-lg border border-neutral-700 bg-neutral-800/60 px-3 py-1 text-xs font-medium text-neutral-300 transition-colors hover:bg-neutral-700"
+          >
+            下載 TXT
+          </button>
+          <button
+            onClick={handleDownloadHtml}
+            className="rounded-lg border border-neutral-700 bg-neutral-800/60 px-3 py-1 text-xs font-medium text-neutral-300 transition-colors hover:bg-neutral-700"
+          >
+            下載 HTML
+          </button>
+        </div>
       </div>
 
       {/* 彩種 / 號碼 / 整體分數 */}
