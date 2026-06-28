@@ -278,7 +278,7 @@ function App() {
         <div className="flex items-start gap-1.5 px-3 py-2 rounded bg-gray-900/40 border border-gray-800/40">
           <AlertTriangle className="w-3 h-3 text-gray-600 mt-0.5 shrink-0" />
           <p className="text-[10px] text-gray-600 leading-relaxed">
-            本系統僅為統計分析與娛樂輔助工具，無法預測中獎。請理性投注，量力而行。
+            本系統僅為統計分析與娛樂輔助工具，無法保證結果。請理性投注，量力而行。
           </p>
         </div>
       </div>
