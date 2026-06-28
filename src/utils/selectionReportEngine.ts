@@ -485,6 +485,85 @@ export function openSelectionReportPrintWindow(
 }
 
 /* ============================================================
+ * 分享(原生 Web Share API,純文字)
+ * ========================================================== */
+
+export type SelectionShareResult =
+  | 'shared'
+  | 'copied'
+  | 'cancelled'
+  | 'failed';
+
+/** 此環境是否可用原生分享(navigator.share)。 */
+export function canUseNativeShare(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  const nav = navigator as Navigator & { share?: unknown };
+  return typeof nav.share === 'function';
+}
+
+/** 組出精簡的分享純文字(標題/彩種/號碼/整體分數/重點建議/娛樂提醒)。 */
+export function buildSelectionShareText(
+  report: SelectionReport,
+  ctx: SelectionReportExportContext = {},
+): string {
+  const overall =
+    ctx.overallScore ?? report.sections.find((s) => s.id === 'overall')?.score;
+  const lines: string[] = [];
+  lines.push(report.title);
+  if (ctx.lotteryType) lines.push(`彩種:${exportGameLabel(ctx.lotteryType)}`);
+  if (ctx.numbers && ctx.numbers.length) lines.push(`號碼:${fmtNums(ctx.numbers)}`);
+  if (overall !== undefined) lines.push(`整體統計完整度:${overall} 分(${report.scoreLabel})`);
+  const tips = report.recommendations.slice(0, 2);
+  if (tips.length) {
+    lines.push('重點建議:');
+    for (const t of tips) lines.push(`・${t}`);
+  }
+  lines.push('');
+  lines.push(ENTERTAINMENT_NOTICE);
+  return lines.join('\n');
+}
+
+/**
+ * 用原生分享分享純文字報告。
+ * - 支援 navigator.share → 開系統分享面板。
+ * - 不支援 / 失敗 → 回退複製到剪貼簿。
+ * - 使用者取消 → 'cancelled'(不再複製)。
+ */
+export async function shareSelectionReportText(
+  report: SelectionReport,
+  ctx: SelectionReportExportContext = {},
+): Promise<SelectionShareResult> {
+  const text = buildSelectionShareText(report, ctx);
+
+  if (canUseNativeShare()) {
+    try {
+      const nav = navigator as Navigator & {
+        share: (data: { title?: string; text?: string }) => Promise<void>;
+      };
+      await nav.share({ title: report.title, text });
+      return 'shared';
+    } catch (err) {
+      // 使用者主動取消分享面板
+      if (err && typeof err === 'object' && (err as { name?: string }).name === 'AbortError') {
+        return 'cancelled';
+      }
+      // 其他錯誤 → 往下回退複製
+    }
+  }
+
+  // 回退:複製到剪貼簿
+  try {
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      await navigator.clipboard.writeText(text);
+      return 'copied';
+    }
+  } catch {
+    /* 忽略,往下回 failed */
+  }
+  return 'failed';
+}
+
+/* ============================================================
  * 保留接口(PDF,本版不實作)
  * ========================================================== */
 

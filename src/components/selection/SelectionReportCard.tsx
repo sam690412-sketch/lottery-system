@@ -15,6 +15,7 @@ import {
   downloadSelectionReportText,
   downloadSelectionReportHtml,
   openSelectionReportPrintWindow,
+  shareSelectionReportText,
   type SelectionSourceMeta,
 } from '@/utils/selectionReportEngine';
 
@@ -95,6 +96,17 @@ function SelectionReportCardBase({
     }
   };
 
+  const handleShare = async () => {
+    const res = await shareSelectionReportText(report, exportCtx);
+    if (typeof window === 'undefined') return;
+    if (res === 'copied') {
+      window.alert('此裝置不支援系統分享,已複製報告到剪貼簿,可自行貼上分享。');
+    } else if (res === 'failed') {
+      window.prompt('複製以下報告內容分享:', exportSelectionReportAsText(report, exportCtx));
+    }
+    // 'shared' / 'cancelled' 不額外提示
+  };
+
   return (
     <div className={`rounded-2xl border border-white/[0.06] bg-neutral-900 p-4 ${className}`}>
       {/* 標題列 */}
@@ -129,6 +141,12 @@ function SelectionReportCardBase({
             className="rounded-lg border border-neutral-700 bg-neutral-800/60 px-3 py-1 text-xs font-medium text-neutral-300 transition-colors hover:bg-neutral-700"
           >
             列印報告
+          </button>
+          <button
+            onClick={handleShare}
+            className="rounded-lg border border-orange-500/40 bg-orange-500/10 px-3 py-1 text-xs font-medium text-orange-300 transition-colors hover:bg-orange-500/20"
+          >
+            分享報告
           </button>
         </div>
       </div>
