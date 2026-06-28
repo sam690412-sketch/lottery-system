@@ -14,6 +14,7 @@ import {
   exportSelectionReportAsText,
   downloadSelectionReportText,
   downloadSelectionReportHtml,
+  openSelectionReportPrintWindow,
   type SelectionSourceMeta,
 } from '@/utils/selectionReportEngine';
 
@@ -81,6 +82,19 @@ function SelectionReportCardBase({
     downloadSelectionReportHtml(report, exportCtx);
   };
 
+  const handlePrint = () => {
+    const opened = openSelectionReportPrintWindow(report, exportCtx);
+    if (!opened) {
+      // popup 被阻擋 → 退回下載 HTML 並提示
+      downloadSelectionReportHtml(report, exportCtx);
+      if (typeof window !== 'undefined') {
+        window.alert(
+          '瀏覽器阻擋了彈出視窗,已改為下載 HTML 報告。請開啟該檔後使用瀏覽器列印(Ctrl / Cmd + P),即可另存為 PDF。',
+        );
+      }
+    }
+  };
+
   return (
     <div className={`rounded-2xl border border-white/[0.06] bg-neutral-900 p-4 ${className}`}>
       {/* 標題列 */}
@@ -109,6 +123,12 @@ function SelectionReportCardBase({
             className="rounded-lg border border-neutral-700 bg-neutral-800/60 px-3 py-1 text-xs font-medium text-neutral-300 transition-colors hover:bg-neutral-700"
           >
             下載 HTML
+          </button>
+          <button
+            onClick={handlePrint}
+            className="rounded-lg border border-neutral-700 bg-neutral-800/60 px-3 py-1 text-xs font-medium text-neutral-300 transition-colors hover:bg-neutral-700"
+          >
+            列印報告
           </button>
         </div>
       </div>

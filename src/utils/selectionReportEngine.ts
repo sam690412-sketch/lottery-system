@@ -369,7 +369,20 @@ export function exportSelectionReportAsHtml(
     '.sec{border:1px solid #1f1f1f;border-radius:10px;padding:10px 12px;margin:8px 0}.sec p{margin:4px 0 0;font-size:13px;color:#a3a3a3}',
     'ul{margin:6px 0;padding-left:20px}li{font-size:13px;margin:2px 0}',
     '.notice{margin-top:20px;padding-top:12px;border-top:1px solid #262626;font-size:12px;color:#737373}',
+    '.print-hint{margin:0 0 16px;padding:10px 12px;border:1px solid #f59e0b55;background:#f59e0b1a;border-radius:10px;font-size:12px;color:#fbbf24}',
+    '@media print{',
+    '  .print-hint{display:none}',
+    '  body{background:#fff;color:#111;margin:0}',
+    '  h2{color:#b45309}h3{color:#111}',
+    '  th{color:#444}td{color:#111}',
+    '  table th,table td{border-bottom:1px solid #ccc}',
+    '  .summary{background:#f6f6f6;border-color:#ddd;color:#111}',
+    '  .sec{border-color:#ccc}.sec p{color:#333}',
+    '  .notice{color:#555;border-color:#ccc}',
+    '  @page{margin:16mm}',
+    '}',
     '</style></head><body>',
+    '<div class="print-hint">列印 / 另存 PDF:請使用瀏覽器列印功能(Ctrl / Cmd + P),並在印表機選擇「另存為 PDF」。</div>',
     `<h1>${esc(report.title)}</h1>`,
     `<table>${metaRows.join('')}</table>`,
     `<p class="summary">${esc(report.summary)}</p>`,
@@ -434,6 +447,41 @@ export function downloadSelectionReportHtml(
   const content = exportSelectionReportAsHtml(report, ctx);
   const filename = createSelectionReportFilename(ctx.lotteryType ?? 'lottery', 'html', report.generatedAt);
   return triggerDownload(content, filename, 'text/html;charset=utf-8');
+}
+
+/* ============================================================
+ * 列印(瀏覽器原生,讓使用者自行另存 PDF)
+ * ========================================================== */
+
+/**
+ * 開新視窗載入 HTML 報告並觸發瀏覽器列印(使用者可於印表機選擇「另存為 PDF」)。
+ * 回傳是否成功開啟視窗;若被 popup 阻擋或非瀏覽器環境則回傳 false。
+ */
+export function openSelectionReportPrintWindow(
+  report: SelectionReport,
+  ctx: SelectionReportExportContext = {},
+): boolean {
+  try {
+    if (typeof window === 'undefined') return false;
+    const html = exportSelectionReportAsHtml(report, ctx);
+    const win = window.open('', '_blank');
+    if (!win) return false; // popup 被阻擋
+    win.document.open();
+    win.document.write(html);
+    win.document.close();
+    // 等內容渲染後再列印(不阻塞主執行緒)
+    setTimeout(() => {
+      try {
+        win.focus();
+        win.print();
+      } catch {
+        /* 使用者可手動 Ctrl/Cmd+P */
+      }
+    }, 300);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /* ============================================================
