@@ -200,12 +200,10 @@ export default function BuilderPage() {
   }
 
   const goNext = () => {
-    setStep((s) => {
-      const next = Math.min(last, s + 1);
-      // 進入 Step 2（index 1）時，若已選彩種則自動跑統計
-      if (next === 1 && lotteryType && !analysisResult) runStatistics(lotteryType);
-      return next;
-    });
+    if (step === 0 && !lotteryType) return;
+    // 避免在 React state updater 內執行分析與其他 setState。
+    if (step === 0 && lotteryType && !analysisResult) runStatistics(lotteryType);
+    setStep(Math.min(last, step + 1));
   };
   const goPrev = () => setStep((s) => Math.max(0, s - 1));
   const skip = () => goNext();
@@ -254,7 +252,7 @@ export default function BuilderPage() {
     <div className="space-y-5 pb-24">
       {/* Header */}
       <div className="flex items-center gap-2 pt-2">
-        <button onClick={() => navigate(-1)} className="p-1.5 rounded-lg hover:bg-gray-800/50 transition">
+        <button onClick={() => navigate(-1)} className="p-2 rounded-lg hover:bg-gray-800/50 transition" aria-label="返回上一頁">
           <ChevronLeft className="w-5 h-5 text-gray-400" />
         </button>
         <div>
@@ -267,7 +265,8 @@ export default function BuilderPage() {
       </div>
 
       {/* Step indicator */}
-      <StepIndicator current={step} onJump={(i) => setStep(i)} />
+      <StepIndicator current={step} onJump={(i) => { if (i <= step) setStep(i); }} />
+      <p className="text-xs text-gray-500">可點選已完成的步驟返回修改；後續步驟請使用「下一步」。</p>
 
       {/* Step content */}
       <Card className="border border-gray-800 bg-gray-900/80">
@@ -278,11 +277,12 @@ export default function BuilderPage() {
 
           {step === 0 ? (
             /* Step 1: 彩種選擇 */
-            <div className="grid grid-cols-3 gap-2 mt-4">
+            <div className="grid grid-cols-1 min-[360px]:grid-cols-3 gap-2 mt-4">
               {LOTTERIES.map((lt) => (
                 <button
                   key={lt.id}
-                  onClick={() => setLotteryType(lt.id)}
+                  onClick={() => { setLotteryType(lt.id); setSaveStatus('idle'); }}
+                  aria-pressed={lotteryType === lt.id}
                   className={[
                     'py-3 rounded-lg text-sm font-bold border transition',
                     lotteryType === lt.id
@@ -417,11 +417,13 @@ export default function BuilderPage() {
                   type="text"
                   value={dreamText}
                   onChange={(e) => setDreamText(e.target.value)}
+                  disabled={dreamApplied}
+                  aria-label="夢境描述"
                   placeholder="例如：夢見大海、蛇、飛機、下雨"
                   className="w-full px-3 py-2 rounded-lg bg-gray-950 border border-gray-700 text-gray-200 text-sm focus:border-amber-500 outline-none"
                 />
                 <div className="flex gap-2">
-                  <Button onClick={handleApplyDream} className="bg-amber-600 hover:bg-amber-500 text-white">加入夢境分析</Button>
+                  <Button onClick={handleApplyDream} disabled={!dreamText.trim() || dreamApplied} className="bg-amber-600 hover:bg-amber-500 text-white disabled:opacity-40">{dreamApplied ? '已加入夢境' : '加入夢境分析'}</Button>
                   <Button variant="ghost" onClick={skip} className="text-gray-400">略過</Button>
                 </div>
                 {dreamApplied && (
@@ -456,10 +458,13 @@ export default function BuilderPage() {
                   type="date"
                   value={birthday}
                   onChange={(e) => setBirthday(e.target.value)}
+                  max={new Date().toISOString().slice(0, 10)}
+                  disabled={birthdayApplied}
+                  aria-label="生日或紀念日"
                   className="w-full px-3 py-2 rounded-lg bg-gray-950 border border-gray-700 text-gray-200 text-sm focus:border-amber-500 outline-none"
                 />
                 <div className="flex gap-2">
-                  <Button onClick={handleApplyBirthday} className="bg-amber-600 hover:bg-amber-500 text-white">加入生日分析</Button>
+                  <Button onClick={handleApplyBirthday} disabled={!birthday || birthdayApplied || birthday > new Date().toISOString().slice(0, 10)} className="bg-amber-600 hover:bg-amber-500 text-white disabled:opacity-40">{birthdayApplied ? '已加入生日' : '加入生日分析'}</Button>
                   <Button variant="ghost" onClick={skip} className="text-gray-400">略過</Button>
                 </div>
                 {birthdayApplied && (
@@ -524,7 +529,7 @@ export default function BuilderPage() {
                   placeholder="想問的事情 / 意念（可留空）"
                   className="w-full px-3 py-2 rounded-lg bg-gray-950 border border-gray-700 text-gray-200 text-sm focus:border-amber-500 outline-none" />
                 <div className="flex gap-2">
-                  <Button onClick={handleApplyMetaphysics} disabled={!metaMethod || !metaBirthday}
+                  <Button onClick={handleApplyMetaphysics} disabled={!metaMethod || !metaBirthday || metaApplied}
                     className="bg-amber-600 hover:bg-amber-500 text-white disabled:opacity-40">加入命理分析</Button>
                   <Button variant="ghost" onClick={skip} className="text-gray-400">略過</Button>
                 </div>
@@ -703,7 +708,7 @@ export default function BuilderPage() {
       </Card>
 
       {/* Controls */}
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2 pb-2">
         <Button variant="outline" onClick={goPrev} disabled={step === 0}
           className="border-gray-700 text-gray-300">
           <ChevronLeft className="w-4 h-4 mr-1" />上一步

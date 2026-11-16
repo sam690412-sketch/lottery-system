@@ -33,8 +33,10 @@ export default function StepIndicator({ current, onJump }: StepIndicatorProps) {
           <div key={step.key} className="flex items-center flex-1 last:flex-none min-w-[2.6rem]">
             <button
               type="button"
-              onClick={() => onJump?.(i)}
-              className="flex flex-col items-center gap-1 shrink-0"
+              onClick={() => { if (i <= current) onJump?.(i); }}
+              disabled={i > current}
+              aria-label={`步驟 ${i + 1}：${step.label}${i > current ? '，尚未開放' : ''}`}
+              className="flex flex-col items-center gap-1 shrink-0 min-w-10 min-h-11 justify-center disabled:cursor-not-allowed"
               aria-current={active ? 'step' : undefined}
             >
               <span
