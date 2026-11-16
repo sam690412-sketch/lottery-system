@@ -39,7 +39,7 @@ export default function MetaphysicsProfile() {
         <div className="p-3 rounded bg-pink-950/20 border border-pink-900/20 flex items-start gap-2">
           <AlertTriangle className="w-4 h-4 text-pink-400 mt-0.5 shrink-0" />
           <p className="text-sm text-pink-300/70">
-            本功能為娛樂性質的個人化權重參考，不具備預測能力。僅輸入年月日時即可，請勿輸入完整姓名或身份證號。
+            本功能為娛樂性質的個人化權重參考，不具備推估能力。僅輸入年月日時即可，請勿輸入完整姓名或身份證號。
           </p>
         </div>
 

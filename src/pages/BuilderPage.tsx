@@ -210,6 +210,7 @@ export default function BuilderPage() {
   const goPrev = () => setStep((s) => Math.max(0, s - 1));
   const skip = () => goNext();
   const restart = () => {
+    setSaveStatus('idle');
     setStep(0);
     setLotteryType(null);
     setAnalysisResult(null);
@@ -630,7 +631,7 @@ export default function BuilderPage() {
                   </div>
                 </div>
 
-                {/* V21: Explain 故事 — 為什麼是這組號碼（娛樂分析，非中獎率） */}
+                {/* V21: Explain 故事 — 為什麼是這組號碼（娛樂分析，非投注建議） */}
                 <div className="rounded-lg border border-purple-900/40 bg-purple-950/15 p-3">
                   <div className="text-xs font-bold text-purple-300 mb-1.5">為什麼是這組號碼</div>
                   {(() => {
@@ -668,7 +669,7 @@ export default function BuilderPage() {
 
                 {/* QA-FIX-1: 收藏到「我的號碼」(v12-keep-sets)；訪客本機暫存 */}
                 <div className="pt-1">
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <Button onClick={saveToMyNumbers} className="bg-amber-600 hover:bg-amber-500 text-white" title="收藏到我的號碼">
                       收藏到我的號碼
                     </Button>
@@ -681,6 +682,18 @@ export default function BuilderPage() {
                   )}
                   {saveStatus === 'duplicate' && (
                     <p className="mt-2 text-xs text-gray-400">這組號碼已在「我的號碼」中，未重複收藏。</p>
+                  )}
+                  {(saveStatus === 'saved' || saveStatus === 'duplicate') && (
+                    <div className="mt-3 flex flex-col sm:flex-row gap-2">
+                      <Button variant="outline" className="border-gray-700 text-gray-200"
+                        onClick={() => window.dispatchEvent(new CustomEvent('v12-navigate', { detail: 'numbers' }))}>
+                        查看我的號碼
+                      </Button>
+                      <Button variant="outline" className="border-gray-700 text-gray-200"
+                        onClick={() => navigate('/selection-analysis')}>
+                        前往選號分析
+                      </Button>
+                    </div>
                   )}
                 </div>
               </div>

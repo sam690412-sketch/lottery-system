@@ -3,7 +3,7 @@
  *
  * 路由:/selection-analysis(請於 router 註冊,見交付說明)。
  * 功能:輸入主號 → scoreSelection() → 顯示整體統計完整度、九項評分、分析報告。
- * 定位:統計分析,非預測;標示娛樂用途。
+ * 定位:統計分析,僅供參考;標示娛樂用途。
  *
  * 採 Adapter Pattern:把 getByRange 的開獎資料整理成評分引擎輸入,
  * 不修改 statistics.ts / HistoryProvider / HistoryEngine。
@@ -116,7 +116,7 @@ export default function SelectionAnalysisPage() {
       <div>
         <h1 className="text-2xl font-bold text-neutral-100">AI 選號分析</h1>
         <p className="text-sm text-neutral-500">
-          統計分析,非預測。以下為號碼平衡度與歷史吻合度的整理,僅供娛樂分析。
+          統計分析,僅供參考。以下為號碼平衡度與歷史吻合度的整理,僅供娛樂分析。
         </p>
       </div>
 

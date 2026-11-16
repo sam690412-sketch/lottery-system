@@ -143,7 +143,7 @@ export default function RealBacktest({ records, userZone1, sources, lotteryType 
               {config.hasSpecial && (
                 <div className="p-3 rounded bg-gray-800/40">
                   <div className="flex justify-between text-xs">
-                    <span className="text-gray-500">{config.specialMode === 'separate' ? '第二區命中率' : '特別號相關'}</span>
+                    <span className="text-gray-500">{config.specialMode === 'separate' ? '第二區符合比例' : '特別號相關'}</span>
                     <span className="text-purple-400">{result.specialHitRate}%</span>
                   </div>
                 </div>
@@ -187,7 +187,7 @@ export default function RealBacktest({ records, userZone1, sources, lotteryType 
 
               <div className="p-2 rounded bg-red-950/20 border border-red-900/20">
                 <p className="text-[10px] text-red-300/70">
-                  免責聲明：以上為{config.name}歷史回測結果，不代表未來績效。{config.name}為純隨機抽獎，任何模型均無法保證中獎。
+                  免責聲明：以上為{config.name}歷史回測結果，不代表未來績效。{config.name}為純隨機抽獎，任何模型均無法保證結果。
                 </p>
               </div>
             </div>

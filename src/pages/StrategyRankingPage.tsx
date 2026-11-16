@@ -1,6 +1,6 @@
 // ============================================================
 // V16 AI策略排行榜頁面 - StrategyRankingPage.tsx
-// 7天/30天/90天 × 命中率/ROI/中獎次數/平均命中
+// 7天/30天/90天 × 符合比例/ROI/中獎次數/平均命中
 // ============================================================
 
 import { useState, useMemo } from 'react';
@@ -17,7 +17,7 @@ const TIME_WINDOWS: { label: string; days: 7 | 30 | 90 }[] = [
 ];
 
 const SORT_OPTIONS: { label: string; key: RankingParams['sortBy'] }[] = [
-  { label: '命中率', key: 'hitRate' },
+  { label: '符合比例', key: 'hitRate' },
   { label: 'ROI', key: 'roi' },
   { label: '中獎次數', key: 'winCount' },
   { label: '平均命中', key: 'avgMatchCount' },
@@ -117,7 +117,7 @@ export default function StrategyRankingPage() {
                     {/* 指標 */}
                     <div className="text-right">
                       <div className="text-lg font-bold text-cyan-400">{r.hitRate}%</div>
-                      <div className="text-xs text-gray-500">命中率</div>
+                      <div className="text-xs text-gray-500">符合比例</div>
                     </div>
                     <div className="text-right">
                       <div className={`text-lg font-bold ${r.roi >= 0 ? 'text-green-400' : 'text-red-400'}`}>

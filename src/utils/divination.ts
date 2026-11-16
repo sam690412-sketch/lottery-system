@@ -249,7 +249,7 @@ export function calcShengXiao(birth: BirthData): DivinationResult {
     recommendedNumbers: lucky.slice(0, 8),
     score: 78,
     description: `${birth.year}年生肖屬${animal}，五行${element}${hasGuiRen ? '，逢貴人星' : ''}。宜選${element}行尾數號碼。`,
-    entertainmentNote: '生肖流年為傳統娛樂參考，無預測能力',
+    entertainmentNote: '生肖流年為傳統娛樂參考，無推估能力',
     enabled: true,
   };
 }
@@ -317,7 +317,7 @@ export function calcTarot(birth: BirthData): DivinationResult {
     recommendedNumbers: lucky.slice(0, 8),
     score: 55,
     description: `塔羅數字對應「${card.name}」，象徵${card.meaning}。五行屬${element}，適合${element}行尾數號碼。`,
-    entertainmentNote: '塔羅數字純為娛樂輔助，無命理預測功能',
+    entertainmentNote: '塔羅數字純為娛樂輔助，無命理推估功能',
     enabled: true,
   };
 }

@@ -72,7 +72,7 @@ export default function DreamInputPanel({ lotteryType }: Props) {
         <div className="p-3 rounded bg-indigo-950/20 border border-indigo-900/20 flex items-start gap-2">
           <AlertTriangle className="w-4 h-4 text-indigo-400 mt-0.5 shrink-0" />
           <p className="text-sm text-indigo-300/70">
-            本功能為象徵性、娛樂性與個人化權重參考，不具備預測能力，不保證中獎。
+            本功能為象徵性、娛樂性與個人化權重參考，不具備推估能力，不保證結果。
           </p>
         </div>
 

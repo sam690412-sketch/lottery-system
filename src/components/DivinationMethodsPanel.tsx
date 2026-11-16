@@ -41,7 +41,7 @@ export default function DivinationMethodsPanel() {
         <div className="p-3 rounded bg-purple-950/20 border border-purple-900/20 flex items-start gap-2">
           <AlertTriangle className="w-4 h-4 text-purple-400 mt-0.5 shrink-0" />
           <p className="text-sm text-purple-300/70">
-            所有掛法皆為簡化娛樂版本，不具備預測能力。每種方法可獨立開關。
+            所有掛法皆為簡化娛樂版本，不具備推估能力。每種方法可獨立開關。
           </p>
         </div>
 

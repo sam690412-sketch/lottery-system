@@ -1,6 +1,6 @@
 // ============================================================
 // V16.4 Module C: 開獎驗證中心
-// 推薦紀錄 / 驗證紀錄 / 命中率 / ROI / 獎級統計
+// 推薦紀錄 / 驗證紀錄 / 符合比例 / ROI / 獎級統計
 // ============================================================
 
 import { useState, useMemo } from 'react';
@@ -20,7 +20,7 @@ const TIME_WINDOWS: { label: string; days: 7 | 30 | 90 }[] = [
 ];
 
 const SORT_OPTIONS: { label: string; key: RankingParams['sortBy'] }[] = [
-  { label: '命中率', key: 'hitRate' },
+  { label: '符合比例', key: 'hitRate' },
   { label: 'ROI', key: 'roi' },
   { label: '中獎次數', key: 'winCount' },
   { label: '平均命中', key: 'avgMatchCount' },
@@ -127,7 +127,7 @@ export default function VerificationCenterPage() {
                     <div className="text-lg font-bold text-gray-300">{summary.totalCount}</div>
                   </div>
                   <div className="bg-gray-900/50 rounded p-2 text-center">
-                    <div className="text-xs text-gray-500">平均命中率</div>
+                    <div className="text-xs text-gray-500">平均符合比例</div>
                     <div className="text-lg font-bold text-cyan-400">{summary.avgHitRate}%</div>
                   </div>
                   <div className="bg-gray-900/50 rounded p-2 text-center">
@@ -215,7 +215,7 @@ function StrategyCard({ ranking: r }: { ranking: StrategyRanking }) {
           {/* 指標 */}
           <div className="text-right">
             <div className="text-lg font-bold text-cyan-400">{r.hitRate}%</div>
-            <div className="text-xs text-gray-500">命中率</div>
+            <div className="text-xs text-gray-500">符合比例</div>
           </div>
           <div className="text-right">
             <div className={`text-lg font-bold ${r.roi >= 0 ? 'text-green-400' : 'text-red-400'}`}>
@@ -272,7 +272,7 @@ function BacktestPanel({ backtest }: { backtest: BacktestCompare }) {
           </thead>
           <tbody>
             <tr className="border-b border-gray-800">
-              <td className="py-2 text-gray-400">命中率</td>
+              <td className="py-2 text-gray-400">符合比例</td>
               <td className="text-right text-gray-300">{control.hitRate}%</td>
               <td className="text-right text-cyan-400">{experiment.hitRate}%</td>
               <td className={`text-right font-bold ${diff.hitRate >= 0 ? 'text-green-400' : 'text-red-400'}`}>
@@ -315,7 +315,7 @@ function BacktestPanel({ backtest }: { backtest: BacktestCompare }) {
       <Card className={`p-4 border ${diff.hitRate > 0 || diff.roi > 0 ? 'bg-green-950/20 border-green-800/30' : 'bg-gray-800/50 border-gray-700'}`}>
         <p className={`text-sm font-bold ${diff.hitRate > 0 || diff.roi > 0 ? 'text-green-400' : 'text-gray-400'}`}>
           {diff.hitRate > 0 || diff.roi > 0
-            ? `✅ 觀察池V3 帶來正面效益：命中率 ${diff.hitRate >= 0 ? '+' : ''}${diff.hitRate}%，ROI ${diff.roi >= 0 ? '+' : ''}${diff.roi}%`
+            ? `✅ 觀察池V3 帶來正面效益：符合比例 ${diff.hitRate >= 0 ? '+' : ''}${diff.hitRate}%，ROI ${diff.roi >= 0 ? '+' : ''}${diff.roi}%`
             : `⚠️ 本次回測觀察池未顯著優於對照組，建議調整觀察池內容後重試`}
         </p>
       </Card>

@@ -7,7 +7,7 @@
 import { useState } from 'react';
 import { Routes, Route, useNavigate } from 'react-router';
 
-// 常駐揭露列（娛樂/不保證中獎/18+/理性購彩）
+// 常駐揭露列（娛樂/不保證結果/18+/理性購彩）
 function DisclaimerBar() {
   return (
     <div className="border-t border-amber-900/40 bg-amber-950/20 px-4 py-3 text-[11px] leading-relaxed text-amber-200/70">

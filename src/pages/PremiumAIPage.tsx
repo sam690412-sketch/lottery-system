@@ -84,13 +84,13 @@ export default function PremiumAIPage() {
           {unlock.message ? (
             <p className="text-sm text-amber-300 mb-2">{unlock.message}</p>
           ) : null}
-          <p className="text-sm text-gray-400 mb-2">這是 VIP 會員專屬的進階 AI 預測功能。</p>
+          <p className="text-sm text-gray-400 mb-2">這是 VIP 會員專屬的進階 AI 分析功能。</p>
           <p className="text-[11px] text-gray-500 mb-6 leading-relaxed">
             升級 VIP 後，你可以使用更強大的 AI 分析模型，獲得更精準的號碼推薦與深度趨勢報告。
           </p>
 
           <div className="space-y-2 mb-6 text-left">
-            <div className="flex items-center gap-2 text-[11px] text-gray-400 bg-gray-900/50 rounded-lg p-2.5"><Zap className="w-3.5 h-3.5 text-amber-500 shrink-0" />AI 熱門預測分析</div>
+            <div className="flex items-center gap-2 text-[11px] text-gray-400 bg-gray-900/50 rounded-lg p-2.5"><Zap className="w-3.5 h-3.5 text-amber-500 shrink-0" />AI 熱門分析</div>
             <div className="flex items-center gap-2 text-[11px] text-gray-400 bg-gray-900/50 rounded-lg p-2.5"><TrendingDown className="w-3.5 h-3.5 text-blue-500 shrink-0" />AI 冷門反彈偵測</div>
             <div className="flex items-center gap-2 text-[11px] text-gray-400 bg-gray-900/50 rounded-lg p-2.5"><Layers className="w-3.5 h-3.5 text-emerald-500 shrink-0" />AI 組合優化</div>
             <div className="flex items-center gap-2 text-[11px] text-gray-400 bg-gray-900/50 rounded-lg p-2.5"><BrainCircuit className="w-3.5 h-3.5 text-purple-500 shrink-0" />AI 綜合推薦報告</div>
@@ -132,7 +132,7 @@ export default function PremiumAIPage() {
       <Card className="border-red-800/30 bg-gradient-to-b from-red-950/10 to-transparent">
         <CardContent className="p-4">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-bold text-red-400 flex items-center gap-1.5"><TrendingUp className="w-4 h-4" />熱門預測</h3>
+            <h3 className="text-sm font-bold text-red-400 flex items-center gap-1.5"><TrendingUp className="w-4 h-4" />熱門分析</h3>
             <span className="text-[9px] bg-red-950/50 text-red-400 rounded px-1.5 py-0.5 font-mono">Random Forest</span>
           </div>
           <div className="flex items-center justify-center gap-2 mb-3">{premium.hotPrediction.numbers.map(n => <span key={n} className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-red-500 to-red-600 text-white text-sm font-bold">{n}</span>)}</div>
@@ -233,7 +233,7 @@ function PremiumBacktest({ lottery }: { lottery: LotteryType }) {
         {!btHot && <p className="text-[11px] text-gray-500 text-center py-2">選擇期數後點擊執行</p>}
         {btHot && <div className="space-y-2">
           {[
-            { label: '熱門預測', result: btHot, color: 'text-red-400', bar: 'bg-red-500' },
+            { label: '熱門分析', result: btHot, color: 'text-red-400', bar: 'bg-red-500' },
             { label: '冷門反彈', result: btCold, color: 'text-blue-400', bar: 'bg-blue-500' },
             { label: 'AI綜合', result: btEns, color: 'text-purple-400', bar: 'bg-purple-500' },
           ].map((item, i) => item.result && (

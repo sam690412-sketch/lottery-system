@@ -2,7 +2,7 @@
 // V19 Sprint-4 — AI Personalization Engine
 // 純前端 · 僅 localStorage · 不碰 13 層權重/統計/回測/開獎/會員/付款/權限。
 // seed 只影響：排序 / 推薦理由 / 同分排序 / 動畫順序 / 人格 / session 文案。
-// 全部可重現（無 Math.random）。所有文案為娛樂分析，不宣稱中獎率。
+// 全部可重現（無 Math.random）。所有文案為娛樂分析，不宣稱實際結果。
 // ============================================================
 
 // ---------- 通用：可重現雜湊（無亂數） ----------
@@ -162,7 +162,7 @@ const MODULE_PHRASES = [
   (m: string) => `保留你習慣的「${m}」分析。`,
 ];
 const CLOSERS = [
-  '再次提醒：以上皆為娛樂分析，不代表中獎率。',
+  '再次提醒：以上皆為娛樂分析，不代表實際結果。',
   '溫馨提醒：本推薦為娛樂與偏好計算，不代表中獎機率，請理性購買。',
   '提醒你：這些是娛樂參考，與中獎無關，量力而為。',
 ];
@@ -199,7 +199,7 @@ export function buildExplanation(opts: {
 // ============================================================
 export type ConfidenceTier = 'Elite' | 'Balanced' | 'Explorer' | 'Experimental';
 export interface TierResult { tier: ConfidenceTier; stars: string; label: string; }
-/** 分數 → 等級/星級（展示用，非中獎率；不顯示百分比）。 */
+/** 分數 → 等級/星級（展示用，非投注建議；不顯示百分比）。 */
 export function scoreToTier(score: number): TierResult {
   if (score >= 85) return { tier: 'Elite', stars: '★★★★★', label: 'Elite' };
   if (score >= 70) return { tier: 'Balanced', stars: '★★★★☆', label: 'Balanced' };

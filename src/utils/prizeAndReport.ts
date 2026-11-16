@@ -78,7 +78,7 @@ export interface AnalysisReport {
   aiSummary: string;
   entertainmentNote: string;
 }
-/** 組合分析報告（純資料；不宣稱中獎率）。hot/cold/factors 由呼叫端帶入既有分析結果。 */
+/** 組合分析報告（純資料；不宣稱實際結果）。hot/cold/factors 由呼叫端帶入既有分析結果。 */
 export function buildAnalysisReport(opts: {
   game: LotteryType; persona: string; range: string; dataCount: number;
   hotNumbers: number[]; coldNumbers: number[]; mainFactors: string[]; reason?: string;
@@ -94,6 +94,6 @@ export function buildAnalysisReport(opts: {
     mainFactors: opts.mainFactors,
     formationReason: opts.reason || `依 ${opts.range} 區間、${opts.dataCount} 期資料，綜合 ${opts.mainFactors.join('、') || '統計'} 等因子整理。`,
     aiSummary: `本報告以「${opts.persona}」風格整理 ${opts.game} 的 ${opts.range} 區間資料（${opts.dataCount} 期）。`,
-    entertainmentNote: '本報告為娛樂與統計整理，不代表中獎率。請理性購買、量力而為。',
+    entertainmentNote: '本報告為娛樂與統計整理，不代表實際結果。請理性購買、量力而為。',
   };
 }

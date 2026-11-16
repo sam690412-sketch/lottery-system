@@ -160,7 +160,7 @@ export function getDailyRecommendation(_type: LotteryType = 'power') {
     : [...scores].sort((a, b) => b.total - a.total).slice(0, 6);
   const numbers = pool.map(s => s.number);
   const avgRaw = pool.length > 0 ? pool.reduce((sum, s) => sum + s.total, 0) / pool.length : 0;
-  // 顯示用信心分數（展示用，非中獎率）；確保有號碼時不顯示 0。
+  // 顯示用信心分數（展示用，非投注建議）；確保有號碼時不顯示 0。
   const confidence = pool.length > 0 ? Math.max(35, Math.round(avgRaw)) : 0;
   let dominantSource = '統計';
   if (pool[0]?.sourceScores) { const se = Object.entries(pool[0].sourceScores).sort((a, b) => b[1] - a[1]); if (se[0]) dominantSource = se[0][0]; }
@@ -174,7 +174,7 @@ export function getDailyRecommendation(_type: LotteryType = 'power') {
   const hotCount = pool.filter(s => (s.layers?.['歷史熱度'] || 0) >= 55).length;
   const coldCount = pool.length - hotCount;
   const hotColdBalance = pool.length > 0 ? `熱號 ${hotCount} · 冷號 ${coldCount}` : '—';
-  // QA-FIX-3: 統計來源摘要 + 風險提示（不宣稱中獎率）
+  // QA-FIX-3: 統計來源摘要 + 風險提示（不宣稱實際結果）
   const statsSummary = `分析 ${history.length} 期歷史資料，綜合 13 層權重`;
   const riskNote = '本推薦為統計與規則計算的展示結果，僅供參考娛樂，不代表中獎機率。';
   return { numbers, confidence, dominantSource, reason: reasons.join(' + '), hotColdBalance, statsSummary, riskNote, date: new Date().toISOString().split('T')[0] };

@@ -4,7 +4,7 @@
 // ⚠️ PageKey 型別保持不變（其他頁仍用），僅調整底部顯示項目。
 // ============================================================
 import { Play, Sparkles, Heart, ClipboardList, User } from 'lucide-react';
-import { useNavigate } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
 
 export type PageKey = 'home' | 'numbers' | 'dream' | 'metaphysics' | 'statistics' | 'ai-analysis' | 'records' | 'member';
 
@@ -29,22 +29,25 @@ const NAV_ITEMS: NavItem[] = [
 
 export default function Navigation({ active, onChange }: Props) {
   const navigate = useNavigate();
+  const location = useLocation();
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-gray-950/95 backdrop-blur-md border-t border-gray-800/50">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-gray-950/95 backdrop-blur-md border-t border-gray-800/50 pb-[env(safe-area-inset-bottom)]" aria-label="主要導覽">
       <div className="max-w-lg mx-auto flex items-center justify-around">
         {NAV_ITEMS.map(item => {
-          const isActive = item.kind === 'page' && item.key === active;
+          const isActive = item.kind === 'page' ? location.pathname === '/' && item.key === active : location.pathname === item.route;
           const Icon = item.icon;
           return (
             <button
               key={item.kind === 'page' ? item.key : item.route}
               onClick={() => (item.kind === 'page' ? onChange(item.key) : navigate(item.route))}
-              className={`flex flex-col items-center gap-0.5 px-1 py-2 transition-colors min-w-[2.4rem] ${
+              type="button"
+              aria-current={isActive ? 'page' : undefined}
+              className={`flex flex-col items-center justify-center gap-1 px-1 py-2 min-h-12 transition-colors min-w-[2.75rem] ${
                 isActive ? 'text-amber-400' : 'text-gray-500 hover:text-gray-300'
               }`}
             >
               <Icon className="w-5 h-5" />
-              <span className="text-[9px] font-medium whitespace-nowrap">{item.label}</span>
+              <span className="text-[10px] font-medium whitespace-nowrap">{item.label}</span>
             </button>
           );
         })}

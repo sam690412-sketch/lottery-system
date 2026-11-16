@@ -379,15 +379,18 @@ export default function HomePage() {
   }, [state.lotteryType, state.methods, state.comboCount, checkMissing, config.mainMax]);
 
   // V18.2.9 P0-1: 正確導航到填寫頁面
+  // TODO-002: numbers/dream/metaphysics 為狀態頁(無 URL route),
+  // 直接 navigate(`/${page}`) 會導向不存在路徑觸發 NotFoundPage。
+  // 改用與 goToStatePage 相同的 v12-navigate 事件切換 page 狀態。
   const goToFill = useCallback((key: string) => {
     const pageMap: Record<string, string> = {
       'keep': 'numbers', 'dream': 'dream', 'meta': 'metaphysics',
     };
     const page = pageMap[key];
     if (page) {
-      navigate(`/${page}`);
+      window.dispatchEvent(new CustomEvent('v12-navigate', { detail: page }));
     }
-  }, [navigate]);
+  }, []);
 
   // V18.2.11 MODULE C: 產號進度動畫
   // 當 generating=true 時啟動進度條，至少顯示 1.5 秒
@@ -458,7 +461,7 @@ export default function HomePage() {
             </button>
           ))}
         </div>
-        {/* 今日一句 AI 建議（依資料自動產生，娛樂分析，非中獎率） */}
+        {/* 今日一句 AI 建議（依資料自動產生，娛樂分析，非投注建議） */}
         <div className="rounded-lg bg-gray-900/40 border border-gray-800 p-3 mb-3">
           <p className="text-xs text-cyan-300/90 leading-relaxed">{personal.session[0] || '今天先看看熱冷分布再決定。'}</p>
           {personal.session[1] && (
@@ -478,7 +481,7 @@ export default function HomePage() {
             <div className="text-[10px] text-gray-500">最近收藏</div>
             <div className="text-xs text-gray-300 truncate">{getLocalHistory().collection[0]?.summary || '尚無'}</div>
           </button>
-          <button onClick={() => navigate('/builder')} className="rounded-lg bg-gray-900/40 border border-gray-800 p-2 hover:border-amber-600/40">
+          <button onClick={() => navigate('/selection-analysis')} className="rounded-lg bg-gray-900/40 border border-gray-800 p-2 hover:border-amber-600/40">
             <div className="text-[10px] text-gray-500">最近分析</div>
             <div className="text-xs text-gray-300 truncate">{getLocalHistory().analysis[0]?.summary || '尚無'}</div>
           </button>
@@ -487,7 +490,7 @@ export default function HomePage() {
             <div className="text-xs text-gray-300 truncate">查看紀錄</div>
           </button>
         </div>
-        <p className="mt-2 text-[10px] text-gray-500 text-center">以上為娛樂分析，不代表中獎率。理性購買、量力而為。</p>
+        <p className="mt-2 text-[10px] text-gray-500 text-center">以上為娛樂分析，不代表實際結果。理性購買、量力而為。</p>
       </div>
 
       {/* V16-6: 打造我的專屬號碼 — 第一屏主入口 */}

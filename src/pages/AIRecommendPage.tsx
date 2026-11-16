@@ -114,7 +114,7 @@ export default function AIRecommendPage() {
           <div className="bg-gray-900/50 rounded-xl p-3 mb-3">
             <div className="flex items-center justify-between mb-1.5"><span className="text-xs text-gray-400">AI 信心度</span><span className="text-sm font-bold text-amber-400">{aiRec.confidence}%</span></div>
             <div className="h-2 bg-gray-800 rounded-full overflow-hidden"><div className="h-full bg-gradient-to-r from-purple-600 via-amber-500 to-amber-400 rounded-full" style={{ width: `${aiRec.confidence}%` }} /></div>
-            <p className="text-[10px] text-gray-500 mt-1.5">信心度越高，表示 AI 對這組號碼的綜合評估越有信心，但不保證中獎。</p>
+            <p className="text-[10px] text-gray-500 mt-1.5">信心度越高，表示 AI 對這組號碼的綜合評估越有信心，但不保證結果。</p>
           </div>
 
           {/* Tags */}
@@ -275,7 +275,7 @@ export default function AIRecommendPage() {
       )}
 
       <div className="px-3 py-2 rounded-lg bg-gray-900/30 border border-gray-800/30">
-        <p className="text-[10px] text-gray-500 leading-relaxed text-center">AI 推薦僅供參考，不保證中獎。請理性投注，量力而行。</p>
+        <p className="text-[10px] text-gray-500 leading-relaxed text-center">AI 推薦僅供參考，不保證結果。請理性投注，量力而行。</p>
       </div>
     </div>
   );

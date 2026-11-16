@@ -131,6 +131,11 @@ function App() {
 
   const location = useLocation();
   const navigate = useNavigate();
+  // 狀態式頁面只在根路徑渲染；從 Builder 等 URL 頁切換底部導覽時先返回根路徑。
+  const handleBottomNavigation = useCallback((target: PageKey) => {
+    setPage(target);
+    if (location.pathname !== '/') navigate('/');
+  }, [location.pathname, navigate]);
   const isV16Route = location.pathname.startsWith('/builder') || location.pathname.startsWith('/combine') || location.pathname.startsWith('/analysis') || location.pathname.startsWith('/combine-analysis') || location.pathname.startsWith('/verify') || location.pathname.startsWith('/backtest') || location.pathname.startsWith('/xuanxue') || location.pathname.startsWith('/vip') || location.pathname.startsWith('/vip-value') || location.pathname.startsWith('/vip-roi') || location.pathname.startsWith('/dashboard') || location.pathname.startsWith('/ai-analysis') || location.pathname.startsWith('/live') || location.pathname.startsWith('/trend') || location.pathname.startsWith('/ai-recommend') || location.pathname.startsWith('/premium-ai') || location.pathname.startsWith('/data-quality') || location.pathname.startsWith('/prize-check') || location.pathname.startsWith('/analysis-center') || location.pathname.startsWith('/selection-analysis');
 
   const renderPage = () => {
@@ -319,7 +324,7 @@ function App() {
 
       {/* 底部導航 */}
       <div className="h-16" />
-      <Navigation active={page as PageKey} onChange={(p) => setPage(p as AppPageKey)} />
+      <Navigation active={page as PageKey} onChange={handleBottomNavigation} />
 
       {/* Debug Panel */}
       <DebugPanel visible={debugVisible} onClose={() => setDebugVisible(false)} />

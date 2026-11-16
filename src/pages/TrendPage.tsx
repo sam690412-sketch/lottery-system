@@ -125,14 +125,14 @@ export default function TrendPage() {
             <Lock className="w-6 h-6 text-amber-500 mb-2" />
             {backendStatusMsg ? <p className="text-[10px] text-amber-300 mb-1">{backendStatusMsg}</p> : null}
             <p className="text-xs font-bold text-amber-400 mb-1">VIP 專屬功能</p>
-            <p className="text-[10px] text-gray-500 mb-3">深度趨勢報告 + AI 預測模型</p>
+            <p className="text-[10px] text-gray-500 mb-3">深度趨勢報告 + AI 分析模型</p>
             <button onClick={() => { trackAIVIPCTA('trend_lock'); navigate('/vip-value-v2'); }} className="px-4 py-2 bg-amber-600 hover:bg-amber-500 rounded-lg text-xs font-bold text-white transition shadow-lg shadow-amber-500/20 flex items-center gap-1.5">
               <Crown className="w-3.5 h-3.5" />升級 VIP 解鎖
             </button>
           </div>
           <div className="opacity-30">
             <h4 className="text-sm font-bold text-amber-400 mb-2 flex items-center gap-1.5"><Sparkles className="w-4 h-4" />深度趨勢報告</h4>
-            <p className="text-[10px] text-gray-500">Random Forest 預測 / Markov 反彈分析 / Bayesian 機率評估</p>
+            <p className="text-[10px] text-gray-500">Random Forest 分析 / Markov 反彈分析 / Bayesian 機率評估</p>
           </div>
         </div>
       )}

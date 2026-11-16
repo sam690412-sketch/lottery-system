@@ -351,7 +351,7 @@ export function generatePremiumAI(type: LotteryType): PremiumAIData {
     hotPrediction: { numbers: rf, method: 'Random Forest', confidence: Math.round(60 + (rf.length / c.z1Count) * 20) },
     coldRebound:   { numbers: markov, method: 'Markov Chain', confidence: Math.round(55 + (markov.length / c.z1Count) * 20) },
     comboOptimized:{ numbers: combo.numbers, method: 'Ensemble', confidence: combo.confidence },
-    ensemble:      { numbers: ens, method: 'Weighted Voting Ensemble', confidence: Math.round(65 + (ens.length / c.z1Count) * 20), reasons: [`熱門預測貢獻：${rf.filter(n => ens.includes(n)).length} 個`, `冷門反彈貢獻：${markov.filter(n => ens.includes(n)).length} 個`, `綜合推薦貢獻：${combo.numbers.filter(n => ens.includes(n)).length} 個`, `奇偶平衡建議：${Math.round(oddEvenStats.avgOdd)}:${Math.round(oddEvenStats.avgEven)}`] },
+    ensemble:      { numbers: ens, method: 'Weighted Voting Ensemble', confidence: Math.round(65 + (ens.length / c.z1Count) * 20), reasons: [`熱門分析貢獻：${rf.filter(n => ens.includes(n)).length} 個`, `冷門反彈貢獻：${markov.filter(n => ens.includes(n)).length} 個`, `綜合推薦貢獻：${combo.numbers.filter(n => ens.includes(n)).length} 個`, `奇偶平衡建議：${Math.round(oddEvenStats.avgOdd)}:${Math.round(oddEvenStats.avgEven)}`] },
   };
 }
 

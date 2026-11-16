@@ -1,6 +1,6 @@
 // ============================================================
 // V16-5 — Builder 最終結果（只依 currentNumberPool 權重排序產生；不重寫 AI、不接 backtest）
-// 不呼叫付款/權限/資料庫。confidenceScore 為「展示用」，不代表中獎率。
+// 不呼叫付款/權限/資料庫。confidenceScore 為「展示用」，不代表實際結果。
 // ============================================================
 import { getConfig, type LotteryType } from '@/utils/lotteryConfig';
 import type { BaseNumberPool } from '@/utils/builderStats';
@@ -26,7 +26,7 @@ export interface FinalBuilderResult {
   mainNumbers: number[];
   specialNumber?: number;
   backupNumbers: number[];
-  confidenceScore: number;        // 展示用（0-100），非中獎率
+  confidenceScore: number;        // 展示用（0-100），非投注建議
   confidenceNote: string;
   sourceWeights: SourceWeight[];
   explanation: NumberExplanation[];
@@ -75,14 +75,14 @@ export function buildFinalBuilderResult(input: FusionInput): FinalBuilderResult 
     { label: 'AI 融合', pct: 0 }, // 本版不接真正 AI 模型
   ];
 
-  // 展示用信心分數：來源完整度 + 權重集中度（非中獎率）
+  // 展示用信心分數：來源完整度 + 權重集中度（非投注建議）
   const activeSources = [appliedSources.statistics, appliedSources.dream, appliedSources.birthday, appliedSources.metaphysics].filter(Boolean).length;
   const completeness = activeSources / 4; // 0-1
   const topWeights = sorted.slice(0, mainCount).reduce((s, e) => s + Math.max(0, e.weight), 0);
   const allWeights = sorted.reduce((s, e) => s + Math.max(0, e.weight), 0) || 1;
   const concentration = Math.min(1, topWeights / allWeights); // 0-1
   const confidenceScore = Math.round((completeness * 0.5 + concentration * 0.5) * 100);
-  const confidenceNote = '此為展示用信心分數（依分析來源完整度與權重集中度計算），不代表中獎率。';
+  const confidenceNote = '此為展示用信心分數（依分析來源完整度與權重集中度計算），不代表實際結果。';
 
   // 形成原因（取主號 + 特別號的既有 reasons）
   const explainNums = [...mainNumbers, ...(specialNumber != null ? [specialNumber] : [])];

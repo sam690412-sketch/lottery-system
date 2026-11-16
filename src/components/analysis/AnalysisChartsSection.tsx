@@ -72,7 +72,7 @@ function AnalysisChartsSectionBase({
       <header className="space-y-1">
         <h2 className="text-base font-semibold text-neutral-100">歷史統計圖表</h2>
         <p className="text-xs leading-relaxed text-neutral-500">
-          以下圖表為歷史資料統計，僅供娛樂參考，不代表中獎率。
+          以下圖表為歷史資料統計，僅供娛樂參考，不代表實際結果。
         </p>
       </header>
 
