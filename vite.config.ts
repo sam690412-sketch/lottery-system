@@ -3,13 +3,14 @@ import path from "path"
 const __dirname = import.meta.dirname
 import react from "@vitejs/plugin-react"
 import { defineConfig } from "vite"
+import { lotteryPwa } from "./pwa/build"
 import { inspectAttr } from 'kimi-plugin-inspect-react'
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
     devServer({ entry: "api/boot.ts", exclude: [/^\/(?!api\/).*$/] }),
-    inspectAttr(), react()],
+    inspectAttr(), react(), lotteryPwa(__dirname, path.resolve(__dirname, "dist/public"))],
   server: {
     port: 3000,
   },

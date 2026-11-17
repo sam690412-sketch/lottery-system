@@ -50,7 +50,7 @@ if (env.isProduction) {
   serveStaticFiles(app);
 
   const port = parseInt(process.env.PORT || "3000");
-  serve({ fetch: app.fetch, port }, () => {
+  serve({ fetch: app.fetch, port, hostname: process.env.LOTTERY_BIND_HOST }, () => {
     console.log(`Server running on http://localhost:${port}/`);
   });
 }

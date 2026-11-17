@@ -6,22 +6,19 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import {
   Radio, Clock, Trophy, Calendar, ChevronLeft, PlusCircle,
   Sparkles, Zap, Hash, Star
 } from 'lucide-react';
 import { getLiveDrawInfo } from '@/utils/lotteryAnalytics';
 import type { LotteryType } from '@/utils/lotteryAnalytics';
-import { getLatestDraw, getRecentDraws } from '@/utils/officialDrawProvider';
-import type { OfficialDraw } from '@/utils/officialDrawProvider';
 import { trackLiveDrawView, trackAIClick } from '@/utils/analytics';
 import { initializeDrawData } from '@/utils/drawSync';
 
 const CFG: { key: LotteryType; label: string; icon: typeof Zap; color: string; desc: string }[] = [
-  { key: 'power',    label: '威力彩',   icon: Zap,   color: 'text-red-400',    desc: '每週一、三、四開獎' },
-  { key: 'lotto649', label: '大樂透',   icon: Star,  color: 'text-blue-400',   desc: '每週二、四開獎' },
-  { key: 'daily539', label: '今彩539',  icon: Hash,  color: 'text-emerald-400', desc: '每週一至五開獎' },
+  { key: 'power',    label: '威力彩',   icon: Zap,   color: 'text-red-400',    desc: '週一、週四' },
+  { key: 'lotto649', label: '大樂透',   icon: Star,  color: 'text-blue-400',   desc: '週二、週五' },
+  { key: 'daily539', label: '今彩539',  icon: Hash,  color: 'text-emerald-400', desc: '週一至週六' },
 ];
 
 function Countdown({ targetDate }: { targetDate: string }) {
@@ -36,9 +33,9 @@ function Countdown({ targetDate }: { targetDate: string }) {
     update(); const iv = setInterval(update, 1000); return () => clearInterval(iv);
   }, [targetDate]);
   const U = ({ v, l }: { v: number; l: string }) => (
-    <div className="flex flex-col items-center"><div className="w-14 h-14 bg-gray-900 border-2 border-amber-700/40 rounded-xl flex items-center justify-center"><span className="text-2xl font-black text-amber-400 tabular-nums">{String(v).padStart(2, '0')}</span></div><span className="text-[10px] text-gray-500 mt-1">{l}</span></div>
+    <div className="flex flex-col items-center"><div className="w-11 h-11 sm:w-14 sm:h-14 bg-gray-900 border-2 border-amber-700/40 rounded-xl flex items-center justify-center"><span className="text-2xl font-black text-amber-400 tabular-nums">{String(v).padStart(2, '0')}</span></div><span className="text-[10px] text-gray-500 mt-1">{l}</span></div>
   );
-  return <div className="flex items-center justify-center gap-3"><U v={time.d} l="天" /><span className="text-2xl text-gray-700 font-black">:</span><U v={time.h} l="時" /><span className="text-2xl text-gray-700 font-black">:</span><U v={time.m} l="分" /><span className="text-2xl text-gray-700 font-black">:</span><U v={time.s} l="秒" /></div>;
+  return <div className="flex flex-wrap items-center justify-center gap-1 sm:gap-3"><U v={time.d} l="天" /><span className="text-2xl text-gray-700 font-black">:</span><U v={time.h} l="時" /><span className="text-2xl text-gray-700 font-black">:</span><U v={time.m} l="分" /><span className="text-2xl text-gray-700 font-black">:</span><U v={time.s} l="秒" /></div>;
 }
 
 export default function LiveDrawPage() {
@@ -56,10 +53,10 @@ export default function LiveDrawPage() {
     <div className="space-y-4 pb-24">
       {/* Header */}
       <div className="flex items-center gap-2">
-        <button onClick={() => navigate(-1)} className="p-1.5 rounded-lg hover:bg-gray-800/50 transition"><ChevronLeft className="w-5 h-5 text-gray-400" /></button>
+        <button aria-label="返回" onClick={() => navigate(-1)} className="p-1.5 rounded-lg hover:bg-gray-800/50 transition"><ChevronLeft className="w-5 h-5 text-gray-400" /></button>
         <div>
-          <h1 className="text-lg font-bold text-gray-100 flex items-center gap-2"><Radio className={`w-5 h-5 ${blink ? 'text-red-500' : 'text-red-800'}`} />即時開獎中心</h1>
-          <p className="text-[10px] text-gray-500">最新開獎結果與下期倒數</p>
+          <h1 className="text-lg font-bold text-gray-100 flex items-center gap-2"><Radio className={`w-5 h-5 ${blink ? 'text-red-500' : 'text-red-800'}`} />開獎資訊</h1>
+          <p className="text-[10px] text-gray-500">顯示本機開獎紀錄與預定下期時間</p>
         </div>
       </div>
 
@@ -84,7 +81,7 @@ export default function LiveDrawPage() {
       {info.latestDraw && (
         <Card className="border-amber-700/50 bg-gradient-to-b from-amber-950/20 to-transparent shadow-lg shadow-amber-900/10">
           <CardContent className="p-5">
-            <div className="flex items-center gap-2 mb-4"><Trophy className="w-5 h-5 text-amber-400" /><h2 className="text-base font-bold text-amber-400">最新一期開獎結果</h2><span className="text-[10px] text-gray-500 ml-auto">第 {info.latestDraw.period} 期</span></div>
+            <div className="flex items-center gap-2 mb-4"><Trophy className="w-5 h-5 text-amber-400" /><h2 className="text-base font-bold text-amber-400">本機紀錄最後一期</h2><span className="text-[10px] text-gray-500 ml-auto">第 {info.latestDraw.period} 期</span></div>
             <div className="flex items-center gap-2.5 flex-wrap justify-center">
               {info.latestDraw.zone1.map(n => (
                 <span key={n} className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-amber-500 to-amber-600 text-white text-base font-bold shadow-lg shadow-amber-500/20">{n}</span>
@@ -109,9 +106,9 @@ export default function LiveDrawPage() {
       )}
 
       {/* Sync & Analyze */}
-      <button onClick={() => { trackAIClick('live_sync_data'); initializeDrawData(); window.location.reload(); }}
+      <button onClick={() => { trackAIClick('live_sync_data'); void initializeDrawData().finally(() => window.location.reload()); }}
         className="w-full py-3 bg-gradient-to-r from-cyan-600 to-cyan-500 rounded-xl text-sm font-bold text-white hover:from-cyan-500 hover:to-cyan-400 transition shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-2">
-        <Zap className="w-4 h-4" />立即分析（同步最新資料）
+        <Zap className="w-4 h-4" />重新讀取開獎資料
       </button>
 
       {/* Recent 10 */}

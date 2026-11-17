@@ -17,8 +17,8 @@ import {
   type ChartPoint,
 } from '../../utils/chartTransform';
 
-/** 橘色系深淺(取代彩虹色票):由深到淺,維持同一色系。 */
-const ORANGE_SCALE = ['#ea580c', '#f97316', '#fb923c', '#fdba74', '#fed7aa'];
+/** 青藍色系，由深至淺。 */
+const CYAN_SCALE = ['#0284C7', CHART_ACCENT, '#7DD3FC', '#BAE6FD', '#E0F2FE'];
 
 export interface BarRankChartProps extends BaseChartProps {
   data: ChartPoint[];
@@ -26,7 +26,7 @@ export interface BarRankChartProps extends BaseChartProps {
   sort?: boolean;
   /** 最多顯示幾列(超過截斷)。 */
   maxItems?: number;
-  /** 單一顏色或彩色(依序取色票)。預設單一橘色。 */
+  /** 單一顏色或彩色(依序取色票)。預設單一青藍色。 */
   colorful?: boolean;
 }
 
@@ -52,7 +52,7 @@ function BarRankChartBase({
     return list.map((d, i) => ({
       ...d,
       pct: max === 0 ? 0 : Math.max(2, (d.value / max) * 100),
-      color: colorful ? ORANGE_SCALE[i % ORANGE_SCALE.length] : CHART_ACCENT,
+      color: colorful ? CYAN_SCALE[i % CYAN_SCALE.length] : CHART_ACCENT,
     }));
   }, [data, sort, maxItems, colorful]);
 

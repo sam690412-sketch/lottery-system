@@ -71,7 +71,7 @@ function ChartCardBase({
 
   return (
     <section
-      className={`rounded-2xl border border-white/[0.06] bg-neutral-900 p-5 ${className}`}
+      className={`v33-panel p-5 ${className}`}
     >
       {hasHeader ? (
         <header className="mb-4 flex items-start justify-between gap-3">

@@ -1,54 +1,55 @@
 // ============================================================
 // 威力彩13層選號漏斗 V16 - 七彩種最終商業版
 // ============================================================
-import { useState, useEffect, useCallback } from 'react';
-import { Routes, Route, useLocation, useNavigate } from 'react-router';
+import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
+import { Routes, Route, Link, useLocation, useNavigate } from 'react-router';
 import type { PageKey } from '@/components/Navigation';
 import Navigation from '@/components/Navigation';
-import HomePage from '@/pages/HomePage';
-import LandingPage from '@/pages/LandingPage';
-import BuilderPage from '@/pages/BuilderPage';
-import AnalysisCenterPage from '@/pages/AnalysisCenterPage';
-import PrizeCheckPage from '@/pages/PrizeCheckPage';
-import MyNumbersPage from '@/pages/MyNumbersPage';
-import DreamPage from '@/pages/DreamPage';
-import MetaphysicsPage from '@/pages/MetaphysicsPage';
-import StatisticsPage from '@/pages/StatisticsPage';
-import RecordsPage from '@/pages/RecordsPage';
-import MemberPage from '@/pages/MemberPage';
-import AdminPanel from '@/pages/AdminPanel';
-import AdminLoginPage from '@/pages/AdminLoginPage';
-import CombineLotteryPage from '@/pages/CombineLotteryPage';
-import CombineAnalysisPage from '@/pages/CombineAnalysisPage';
-import DigitAnalysisPage from '@/pages/DigitAnalysisPage';
-import StrategyRankingPage from '@/pages/StrategyRankingPage';
-import VerificationCenterPage from '@/pages/VerificationCenterPage';
-import XuanxueCenterPage from '@/pages/XuanxueCenterPage';
-import VIPPage from '@/pages/VIPPage';
-import VIPValuePage from '@/pages/VIPValuePage';
-import VIPValueV2Page from '@/pages/VIPValueV2Page';
-import VIPROIPage from '@/pages/VIPROIPage';
-import DashboardPage from '@/pages/DashboardPage';
-import PaymentPage from '@/pages/PaymentPage';
-import PaymentResultPage from '@/pages/PaymentResultPage';
-import AdminPaymentCenterPage from '@/pages/AdminPaymentCenterPage';
-import AIAnalysisPage from '@/pages/AIAnalysisPage';
-import LiveDrawPage from '@/pages/LiveDrawPage';
-import TrendPage from '@/pages/TrendPage';
-import AIRecommendPage from '@/pages/AIRecommendPage';
-import PremiumAIPage from '@/pages/PremiumAIPage';
-import DataQualityPage from '@/pages/DataQualityPage';
-import SelectionAnalysisPage from '@/pages/SelectionAnalysisPage';
-import NotFoundPage from '@/pages/NotFoundPage';
-import DebugPanel from '@/components/DebugPanel';
-import { initializeDrawData } from '@/utils/drawSync';
-import { autoSyncOnStartup } from '@/utils/drawSyncScheduler';
 import { loadSession, clearSession, validateSessionUser } from '@/utils/authSession';
 import { useAuth } from '@/providers/AuthProvider';
 import { computeBackendIsAdmin } from '@/utils/adminGuard';
 import { getRoleLabel } from '@/utils/permissions';
 import type { UserRole } from '@/utils/permissions';
 import { AlertTriangle, Shield, Bug, Terminal } from 'lucide-react';
+import PwaControls, { useOnline } from '@/pwa/PwaControls';
+import V33HomePage from '@/pages/V33HomePage';
+
+const DebugPanel = lazy(() => import('@/components/DebugPanel'));
+const HomePage = lazy(() => import('@/pages/HomePage'));
+const LandingPage = lazy(() => import('@/pages/LandingPage'));
+const BuilderPage = lazy(() => import('@/pages/BuilderPage'));
+const AnalysisCenterPage = lazy(() => import('@/pages/AnalysisCenterPage'));
+const PrizeCheckPage = lazy(() => import('@/pages/PrizeCheckPage'));
+const MyNumbersPage = lazy(() => import('@/pages/MyNumbersPage'));
+const DreamPage = lazy(() => import('@/pages/DreamPage'));
+const MetaphysicsPage = lazy(() => import('@/pages/MetaphysicsPage'));
+const StatisticsPage = lazy(() => import('@/pages/StatisticsPage'));
+const RecordsPage = lazy(() => import('@/pages/RecordsPage'));
+const MemberPage = lazy(() => import('@/pages/MemberPage'));
+const AdminPanel = lazy(() => import('@/pages/AdminPanel'));
+const AdminLoginPage = lazy(() => import('@/pages/AdminLoginPage'));
+const CombineLotteryPage = lazy(() => import('@/pages/CombineLotteryPage'));
+const CombineAnalysisPage = lazy(() => import('@/pages/CombineAnalysisPage'));
+const DigitAnalysisPage = lazy(() => import('@/pages/DigitAnalysisPage'));
+const StrategyRankingPage = lazy(() => import('@/pages/StrategyRankingPage'));
+const VerificationCenterPage = lazy(() => import('@/pages/VerificationCenterPage'));
+const XuanxueCenterPage = lazy(() => import('@/pages/XuanxueCenterPage'));
+const VIPPage = lazy(() => import('@/pages/VIPPage'));
+const VIPValuePage = lazy(() => import('@/pages/VIPValuePage'));
+const VIPValueV2Page = lazy(() => import('@/pages/VIPValueV2Page'));
+const VIPROIPage = lazy(() => import('@/pages/VIPROIPage'));
+const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
+const PaymentPage = lazy(() => import('@/pages/PaymentPage'));
+const PaymentResultPage = lazy(() => import('@/pages/PaymentResultPage'));
+const AdminPaymentCenterPage = lazy(() => import('@/pages/AdminPaymentCenterPage'));
+const AIAnalysisPage = lazy(() => import('@/pages/AIAnalysisPage'));
+const LiveDrawPage = lazy(() => import('@/pages/LiveDrawPage'));
+const TrendPage = lazy(() => import('@/pages/TrendPage'));
+const AIRecommendPage = lazy(() => import('@/pages/AIRecommendPage'));
+const PremiumAIPage = lazy(() => import('@/pages/PremiumAIPage'));
+const DataQualityPage = lazy(() => import('@/pages/DataQualityPage'));
+const SelectionAnalysisPage = lazy(() => import('@/pages/SelectionAnalysisPage'));
+const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 
 type AppPageKey = PageKey | 'admin' | 'adminlogin' | 'ranking';
 
@@ -56,6 +57,7 @@ function App() {
   const [page, setPage] = useState<AppPageKey>('home');
   const [role, setRole] = useState<UserRole>('guest');
   const [username, setUsername] = useState('');
+  const [memberRoleLabel, setMemberRoleLabel] = useState(getRoleLabel);
   const [debugVisible, setDebugVisible] = useState(false);
   const [initialized, setInitialized] = useState(false);
 
@@ -75,27 +77,47 @@ function App() {
     setInitialized(true);
 
     // V19.3: Initialize historical draw data
-    initializeDrawData().catch(() => {});
-    // V19.3.5: Auto-sync on startup if due
-    autoSyncOnStartup().catch(() => {});
+    if (!navigator.onLine) return;
+    const start = window.setTimeout(() => {
+      void import('@/utils/drawSync').then(({ initializeDrawData }) => initializeDrawData()).catch(() => {});
+      void import('@/utils/drawSyncScheduler').then(({ autoSyncOnStartup }) => autoSyncOnStartup()).catch(() => {});
+    }, window.location.pathname === '/' ? 1800 : 0);
+    return () => window.clearTimeout(start);
   }, []);
 
-  // 監聽導航事件
+  const location = useLocation();
+  const navigate = useNavigate();
+  const online = useOnline();
+
+  const openLegacyPage = useCallback((target: AppPageKey) => {
+    const routes: Partial<Record<AppPageKey, string>> = {
+      numbers: '/my-numbers', member: '/member', records: '/records',
+    };
+    const route = routes[target];
+    if (route) {
+      navigate(route);
+    } else {
+      setPage(target);
+      if (location.pathname !== '/') navigate('/');
+    }
+  }, [location.pathname, navigate]);
+
+  // 監聽舊有頁面導航事件
   useEffect(() => {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail;
-      if (detail === 'numbers') setPage('numbers');
-      if (detail === 'dream') setPage('dream');
-      if (detail === 'metaphysics') setPage('metaphysics');
-      if (detail === 'statistics') setPage('statistics');
-      if (detail === 'records') setPage('records');
-      if (detail === 'ranking') setPage('ranking');
-      if (detail === 'admin') setPage('admin');
-      if (detail === 'member') setPage('member');
+      if (detail === 'numbers') openLegacyPage('numbers');
+      if (detail === 'dream') openLegacyPage('dream');
+      if (detail === 'metaphysics') openLegacyPage('metaphysics');
+      if (detail === 'statistics') openLegacyPage('statistics');
+      if (detail === 'records') openLegacyPage('records');
+      if (detail === 'ranking') openLegacyPage('ranking');
+      if (detail === 'admin') openLegacyPage('admin');
+      if (detail === 'member') openLegacyPage('member');
     };
     window.addEventListener('v12-navigate', handler);
     return () => window.removeEventListener('v12-navigate', handler);
-  }, []);
+  }, [openLegacyPage]);
 
   // 登入成功回調（從 AdminLoginPage 呼叫）
   const handleLogin = useCallback(() => {
@@ -121,24 +143,27 @@ function App() {
 
   // V13.5: isAdmin / isTester 必須從 role state 計算
   // 不可在每次 render 呼叫 isAdminSession()，否則可能與 state 不同步
-  const isAdmin = role === 'admin';
   const isTester = role === 'tester';
+  useEffect(() => {
+    setMemberRoleLabel(getRoleLabel());
+  }, [role]);
 
   // Batch 3b: Admin 外層守衛改用「後端權威」(/api/auth/me)，不再用 localStorage role。
   // backendIsAdmin 僅用於 /admin* 路由准入與 admin 入口顯隱；localStorage isAdmin 僅供其他既有顯示。
   const { role: backendRole, authenticated: backendAuthenticated, loading: authLoading } = useAuth();
   const backendIsAdmin = computeBackendIsAdmin(backendAuthenticated, backendRole);
 
-  const location = useLocation();
-  const navigate = useNavigate();
-  // 狀態式頁面只在根路徑渲染；從 Builder 等 URL 頁切換底部導覽時先返回根路徑。
-  const handleBottomNavigation = useCallback((target: PageKey) => {
-    setPage(target);
-    if (location.pathname !== '/') navigate('/');
-  }, [location.pathname, navigate]);
   const isV16Route = location.pathname.startsWith('/builder') || location.pathname.startsWith('/combine') || location.pathname.startsWith('/analysis') || location.pathname.startsWith('/combine-analysis') || location.pathname.startsWith('/verify') || location.pathname.startsWith('/backtest') || location.pathname.startsWith('/xuanxue') || location.pathname.startsWith('/vip') || location.pathname.startsWith('/vip-value') || location.pathname.startsWith('/vip-roi') || location.pathname.startsWith('/dashboard') || location.pathname.startsWith('/ai-analysis') || location.pathname.startsWith('/live') || location.pathname.startsWith('/trend') || location.pathname.startsWith('/ai-recommend') || location.pathname.startsWith('/premium-ai') || location.pathname.startsWith('/data-quality') || location.pathname.startsWith('/prize-check') || location.pathname.startsWith('/analysis-center') || location.pathname.startsWith('/selection-analysis');
 
   const renderPage = () => {
+    if (location.pathname === '/my-numbers') return <MyNumbersPage />;
+    if (location.pathname === '/member') return <MemberPage onRoleLabelChange={setMemberRoleLabel} onAdminLogin={() => openLegacyPage('adminlogin')} />;
+    if (location.pathname === '/records') return <RecordsPage />;
+    if (location.pathname === '/guided') return <HomePage />;
+    if (!online && location.pathname === '/live') {
+      return <section className="v33-online-required"><h1>開獎資訊需要網路連線</h1><p>重新連線後即可查看開獎資料。</p><Link to="/">回首頁</Link></section>;
+    }
+
     // PHASE 24: 娛樂版 Landing（/lp 隔離路由，不依賴登入/權限/quota）
     if (location.pathname.startsWith('/lp')) {
       return <LandingPage />;
@@ -149,7 +174,7 @@ function App() {
         <Routes>
           <Route path="/builder" element={<BuilderPage />} />
           <Route path="/analysis-center" element={<AnalysisCenterPage />} />
-          <Route path="/selection-analysis" element={<SelectionAnalysisPage />} />
+          <Route path="/selection-analysis" element={<SelectionAnalysisPage key={location.search} />} />
           <Route path="/prize-check" element={<PrizeCheckPage />} />
           <Route path="/combine/:lotteryType" element={<CombineLotteryPage />} />
           <Route path="/combine/49" element={<CombineLotteryPage forcedType="lotto49c" />} />
@@ -221,113 +246,77 @@ function App() {
     }
     // 一般頁面
     switch (page) {
-      case 'home': return <HomePage />;
+      case 'home': return <V33HomePage />;
       case 'numbers': return <MyNumbersPage />;
       case 'dream': return <DreamPage />;
       case 'metaphysics': return <MetaphysicsPage />;
       case 'statistics': return <StatisticsPage />;
       case 'ai-analysis': return <AIAnalysisPage />;
       case 'records': return <RecordsPage />;
-      case 'member': return <MemberPage onAdminLogin={() => setPage('adminlogin')} />;
+      case 'member': return <MemberPage onRoleLabelChange={setMemberRoleLabel} onAdminLogin={() => setPage('adminlogin')} />;
       case 'ranking': return <StrategyRankingPage />;
-      default: return <HomePage />;
+      default: return <V33HomePage />;
     }
   };
 
   // 未初始化時顯示載入中
   if (!initialized) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950 text-gray-100 flex items-center justify-center">
+      <div className="v33-shell flex items-center justify-center">
         <p className="text-gray-500 text-sm">載入中...</p>
       </div>
     );
   }
 
+  const home = location.pathname === '/' && page === 'home';
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950 text-gray-100">
-      {/* 頂部標題列 */}
-      <header className="sticky top-0 z-40 bg-gray-950/80 backdrop-blur-md border-b border-gray-800/50">
-        <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center">
-              <span className="text-white font-bold text-xs">13</span>
-            </div>
-            <div>
-              <h1 className="text-sm font-bold text-gray-100 leading-tight">選號漏斗</h1>
-              <p className="text-[10px] text-gray-500 leading-tight">V14.1</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            {/* Debug 按鈕（小且隱蔽） */}
-            <button
-              onClick={() => setDebugVisible(true)}
-              className="text-gray-600 hover:text-amber-400 transition"
-              title="Debug Session"
-            >
-              <Terminal className="w-3 h-3" />
-            </button>
+    <div className="v33-shell">
+      <a className="v33-skip" href="#main-content">跳到主要內容</a>
+      <header className="v33-topbar">
+        <div className="v33-topbar-inner">
+          <Link className="v33-brand" to="/" onClick={() => setPage('home')}>
+            <img src="/pwa/brand.svg" alt="" width="38" height="38" />
+            <span>選號漏斗</span>
+          </Link>
+          <Navigation placement="desktop" home={home} onHome={() => setPage('home')} />
+          <div className="v33-topbar-actions">
             {backendIsAdmin && (
-              <button onClick={() => setPage('admin')} className="text-purple-400 hover:text-purple-300 transition">
-                <Shield className="w-4 h-4" />
+              <button type="button" onClick={() => openLegacyPage('admin')} className="v33-header-control" aria-label="管理後台">
+                <Shield size={17} aria-hidden="true" />
               </button>
             )}
-            {isTester && (
-              <span className="flex items-center gap-1 text-emerald-400">
-                <Bug className="w-3 h-3" />
-                <span className="text-xs">{username}</span>
-              </span>
+            {(backendIsAdmin || isTester || import.meta.env.DEV) && (
+              <button type="button" onClick={() => setDebugVisible(true)} className="v33-header-control" aria-label="工作階段診斷">
+                <Terminal size={17} aria-hidden="true" />
+              </button>
             )}
-            <span className={`text-xs ${
-              isAdmin ? 'text-purple-400' : isTester ? 'text-emerald-400' : role === 'vip' ? 'text-amber-400' : 'text-gray-500'
-            }`}>
-              {getRoleLabel()}
-            </span>
+            <Link className="v33-user-status" to="/member">{isTester && username ? username : memberRoleLabel}</Link>
           </div>
+          <PwaControls />
         </div>
       </header>
 
-      {/* 免責聲明 */}
-      <div className="max-w-lg mx-auto px-4 pt-3">
-        <div className="flex items-start gap-1.5 px-3 py-2 rounded bg-gray-900/40 border border-gray-800/40">
-          <AlertTriangle className="w-3 h-3 text-gray-600 mt-0.5 shrink-0" />
-          <p className="text-[10px] text-gray-600 leading-relaxed">
-            本系統僅為統計分析與娛樂輔助工具，無法保證結果。請理性投注，量力而行。
-          </p>
-        </div>
-      </div>
-
-      {/* 測試員模式提示 */}
       {isTester && (
-        <div className="max-w-lg mx-auto px-4 pt-2">
-          <div className="flex items-center gap-2 px-3 py-2 rounded bg-emerald-950/20 border border-emerald-800/30">
-            <Bug className="w-4 h-4 text-emerald-400 shrink-0" />
-            <p className="text-xs text-emerald-400">
-              測試員模式：你可以無限測試所有功能，但無管理權限。
-            </p>
-          </div>
+        <div className="v33-tester">
+          <Bug size={17} aria-hidden="true" /> 測試員模式，可測試前台功能。
         </div>
       )}
 
-      {/* 主內容 */}
-      <main className="max-w-lg mx-auto px-4 pt-4">
-        {renderPage()}
+      <main id="main-content" tabIndex={-1} className={home ? 'v33-main v33-main-home' : 'v33-main v33-main-page'}>
+        <Suspense fallback={<p className="v33-loading" role="status">載入中…</p>}>
+          {renderPage()}
+        </Suspense>
       </main>
 
-      {/* V16.4 驗證中心快速入口 */}
-      <div className="fixed bottom-20 right-4 z-40">
-        <button
-          onClick={() => navigate('/verify')}
-          className="w-12 h-12 rounded-full bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-lg shadow-amber-500/20 flex items-center justify-center text-lg hover:scale-110 transition-transform"
-          title="開獎驗證中心"
-        >🏆</button>
-      </div>
+      <footer className="v33-footer">
+        <AlertTriangle size={15} aria-hidden="true" />
+        <p>僅供統計與娛樂參考。請理性投注，量力而行。</p>
+        <Link to="/records">使用紀錄</Link>
+      </footer>
 
-      {/* 底部導航 */}
-      <div className="h-16" />
-      <Navigation active={page as PageKey} onChange={handleBottomNavigation} />
-
-      {/* Debug Panel */}
-      <DebugPanel visible={debugVisible} onClose={() => setDebugVisible(false)} />
+      <Navigation placement="mobile" home={home} onHome={() => setPage('home')} />
+      {debugVisible && <Suspense fallback={null}><DebugPanel visible onClose={() => setDebugVisible(false)} /></Suspense>}
     </div>
   );
 }

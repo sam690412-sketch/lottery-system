@@ -126,7 +126,7 @@ export default function MetaphysicsPage() {
   return (
     <div className="space-y-6 pb-24">
       <div>
-        <h1 className="text-2xl font-bold text-gray-100 flex items-center gap-2"><Sparkles className="w-6 h-6 text-amber-400" />命理輔助</h1>
+        <h1 className="text-2xl font-bold text-gray-100 flex items-center gap-2"><Sparkles className="w-6 h-6 v33-mystic-accent" />命理輔助</h1>
         <p className="text-sm text-gray-500">7大學派，可勾選、可設權重，總權重100%</p>
       </div>
 
@@ -187,7 +187,7 @@ export default function MetaphysicsPage() {
                       <p className="text-xs text-gray-500">{s.origin} · {s.description}</p>
                     </div>
                   </div>
-                  {isEnabled && <Badge className="bg-amber-600 text-xs">{Math.round(weights[s.id] || s.defaultWeight)}%</Badge>}
+                  {isEnabled && <Badge className="v33-mystic-tag text-xs">{Math.round(weights[s.id] || s.defaultWeight)}%</Badge>}
                 </div>
               );
             })}
@@ -240,7 +240,7 @@ export default function MetaphysicsPage() {
               ))}
             </div>
           </div>
-          <Button onClick={handleSaveBirth} className="bg-amber-600 hover:bg-amber-500">
+          <Button onClick={handleSaveBirth} className="v33-cta">
             <Save className="w-4 h-4 mr-1" /> {saved ? '已儲存' : '儲存並解析'}
           </Button>
 
@@ -271,7 +271,7 @@ export default function MetaphysicsPage() {
                 <div key={r.school} className="p-3 rounded-lg bg-gray-900/40 border border-gray-800">
                   <div className="flex items-center justify-between">
                     <p className="font-bold text-gray-200 text-sm">{r.schoolName}</p>
-                    <Badge variant="outline" className="text-xs border-amber-500/30 text-amber-400">權重{r.userWeight}%</Badge>
+                    <Badge variant="outline" className="text-xs v33-mystic-tag">權重{r.userWeight}%</Badge>
                   </div>
                   <p className="text-xs text-gray-500 mt-1">{r.basis}</p>
                   <div className="flex flex-wrap gap-1 mt-2">

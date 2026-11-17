@@ -1,54 +1,40 @@
-// ============================================================
-// V16-6 底部導航 - 主入口收斂為 5 項：首頁 / 打造號碼 / 我的號碼 / 紀錄 / 會員
-// ⚠️ 不刪頁、不刪路由：夢境/命理/統計/AI 等頁仍可由首頁「進階功能」或路由到達。
-// ⚠️ PageKey 型別保持不變（其他頁仍用），僅調整底部顯示項目。
-// ============================================================
-import { Play, Sparkles, Heart, ClipboardList, User } from 'lucide-react';
-import { useLocation, useNavigate } from 'react-router';
+import { ChartNoAxesCombined, Heart, House, Sparkles, UserRound } from 'lucide-react';
+import { Link, useLocation } from 'react-router';
 
 export type PageKey = 'home' | 'numbers' | 'dream' | 'metaphysics' | 'statistics' | 'ai-analysis' | 'records' | 'member';
 
-interface Props {
-  active: PageKey;
-  onChange: (page: PageKey) => void;
-  isAdmin?: boolean;
-}
-
-// 主導航項目：page-key 型（由 onChange 處理）或 route 型（直接導向，如 Builder）
-type NavItem =
-  | { kind: 'page'; key: PageKey; label: string; icon: typeof Play }
-  | { kind: 'route'; route: string; label: string; icon: typeof Play };
-
-const NAV_ITEMS: NavItem[] = [
-  { kind: 'page', key: 'home', label: '首頁', icon: Play },
-  { kind: 'route', route: '/builder', label: '打造號碼', icon: Sparkles },
-  { kind: 'page', key: 'numbers', label: '我的號碼', icon: Heart },
-  { kind: 'page', key: 'records', label: '紀錄', icon: ClipboardList },
-  { kind: 'page', key: 'member', label: '會員', icon: User },
+const NAV_ITEMS = [
+  { to: '/', label: '首頁', shortLabel: '首頁', icon: House },
+  { to: '/builder', label: '打造號碼', shortLabel: '打造', icon: Sparkles },
+  { to: '/analysis-center', label: 'AI 分析', shortLabel: '分析', icon: ChartNoAxesCombined },
+  { to: '/my-numbers', label: '我的收藏', shortLabel: '收藏', icon: Heart },
+  { to: '/member', label: '會員中心', shortLabel: '會員', icon: UserRound },
 ];
 
-export default function Navigation({ active, onChange }: Props) {
-  const navigate = useNavigate();
-  const location = useLocation();
+const ANALYSIS_ROUTES = ['/selection-analysis', '/analysis', '/ai-analysis', '/combine-analysis', '/trend'];
+
+interface NavigationProps {
+  placement: 'desktop' | 'mobile';
+  home: boolean;
+  onHome: () => void;
+}
+
+export default function Navigation({ placement, home, onHome }: NavigationProps) {
+  const { pathname } = useLocation();
+  const desktop = placement === 'desktop';
+  const analysisRoute = ANALYSIS_ROUTES.some(route => pathname === route || pathname.startsWith(route + '/'));
+
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-gray-950/95 backdrop-blur-md border-t border-gray-800/50 pb-[env(safe-area-inset-bottom)]" aria-label="主要導覽">
-      <div className="max-w-lg mx-auto flex items-center justify-around">
-        {NAV_ITEMS.map(item => {
-          const isActive = item.kind === 'page' ? location.pathname === '/' && item.key === active : location.pathname === item.route;
-          const Icon = item.icon;
+    <nav className={desktop ? 'v33-navigation-desktop hidden md:block' : 'v33-navigation-mobile md:hidden'} aria-label="主要導覽">
+      <div className="v33-nav-inner">
+        {NAV_ITEMS.map(({ to, label, shortLabel, icon: Icon }) => {
+          const active = to === '/' ? home : pathname === to || (to === '/analysis-center' && analysisRoute);
           return (
-            <button
-              key={item.kind === 'page' ? item.key : item.route}
-              onClick={() => (item.kind === 'page' ? onChange(item.key) : navigate(item.route))}
-              type="button"
-              aria-current={isActive ? 'page' : undefined}
-              className={`flex flex-col items-center justify-center gap-1 px-1 py-2 min-h-12 transition-colors min-w-[2.75rem] ${
-                isActive ? 'text-amber-400' : 'text-gray-500 hover:text-gray-300'
-              }`}
-            >
-              <Icon className="w-5 h-5" />
-              <span className="text-[10px] font-medium whitespace-nowrap">{item.label}</span>
-            </button>
+            <Link key={to} to={to} aria-current={active ? 'page' : undefined} aria-label={label}
+              onClick={to === '/' ? onHome : undefined}>
+              <span className="v33-nav-icon"><Icon size={20} aria-hidden="true" /></span>
+              <span>{desktop ? label : shortLabel}</span>
+            </Link>
           );
         })}
       </div>

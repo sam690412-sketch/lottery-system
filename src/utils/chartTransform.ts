@@ -70,20 +70,20 @@ export interface BaseChartProps {
 }
 
 /* ============================================================
- * 2. 色票(沿用深色 + 橘色重點)
+ * 2. 圖表色票
  * ========================================================== */
 
-/** 主橘色重點色。 */
-export const CHART_ACCENT = '#f97316'; // orange-500
-export const CHART_ACCENT_SOFT = '#fb923c'; // orange-400
+/** 單序列圖表使用數據青藍。 */
+export const CHART_ACCENT = 'var(--v33-data, #38BDF8)';
+export const CHART_ACCENT_SOFT = '#7DD3FC';
 
-/** 多序列 / 多扇形時的循環色票(橘為主,輔以低彩度配色)。 */
+/** 多序列與多扇形使用可辨識的色票。 */
 export const CHART_PALETTE: readonly string[] = [
-  '#f97316', // orange-500
-  '#fb923c', // orange-400
-  '#fbbf24', // amber-400
-  '#60a5fa', // blue-400
-  '#a78bfa', // violet-400
+  CHART_ACCENT,
+  '#F59E0B',
+  '#A78BFA',
+  '#60A5FA',
+  '#FCD34D',
   '#34d399', // emerald-400
   '#f472b6', // pink-400
   '#94a3b8', // slate-400
@@ -303,12 +303,12 @@ export function buildHeatmapMatrix(cells: HeatmapCell[]): HeatmapMatrix {
   return { rows, cols, matrix, min, max };
 }
 
-/** 依強度(0~1)回傳橘色系 rgba,供熱力圖格子背景。 */
+/** 依強度(0~1)回傳青藍色系 rgba,供熱力圖格子背景。 */
 export function heatColor(intensity: number): string {
   const t = Math.min(1, Math.max(0, intensity));
-  // 從近乎透明的軌道色到飽和橘色
+  // 從近乎透明的軌道色到高濃度青藍
   const alpha = 0.08 + t * 0.92;
-  return `rgba(249, 115, 22, ${alpha.toFixed(3)})`;
+  return `rgba(56, 189, 248, ${alpha.toFixed(3)})`;
 }
 
 /* ============================================================

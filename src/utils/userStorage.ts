@@ -3,16 +3,13 @@
 // ============================================================
 
 import { loadUser } from '@/components/AuthPanel';
+import { loadUserSession } from '@/repositories/authStorage';
 import { loadJson, saveJson, removeKey } from '@/repositories/businessDataStorage';
 
 /** 取得目前使用者ID：會員用email前綴，訪客用 'guest' */
 export function getCurrentUserId(): string {
-  const user = loadUser();
-  if (user?.email) {
-    // 用email前綴作為userId，去掉特殊字元
-    return user.email.replace(/[^a-zA-Z0-9]/g, '_');
-  }
-  return 'guest';
+  const email = loadUserSession()?.email || loadUser()?.email;
+  return email ? email.replace(/[^a-zA-Z0-9]/g, '_') : 'guest';
 }
 
 /** 產生隔離的 key: {baseKey}:{userId} */
