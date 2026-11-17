@@ -28,7 +28,7 @@ interface XuanxueMethod {
 }
 
 const METHODS: XuanxueMethod[] = [
-  { id: 'dream', name: '夢境解號', desc: '輸入夢境內容，AI轉換為象徵號碼', icon: Moon, color: 'border-indigo-500/40 bg-indigo-950/20 text-indigo-400', placeholder: '例如：夢見大海...', example: '夢見大海' },
+  { id: 'dream', name: '夢境解號', desc: '輸入夢境內容，AI轉換為象徵號碼', icon: Moon, color: 'v33-mystic-tag', placeholder: '例如：夢見大海...', example: '夢見大海' },
   { id: 'birth', name: '生日解號', desc: '輸入生日，計算生命靈數對應號碼', icon: Calendar, color: 'border-rose-500/40 bg-rose-950/20 text-rose-400', placeholder: 'YYYY-MM-DD', example: '1990-05-20' },
   { id: 'phone', name: '手機解號', desc: '輸入手機號碼，取吉利尾數組合', icon: Smartphone, color: 'border-emerald-500/40 bg-emerald-950/20 text-emerald-400', placeholder: '09XXXXXXXX', example: '0912345678' },
   { id: 'car', name: '車牌解號', desc: '輸入車牌號碼，分析幸運數字', icon: Car, color: 'border-cyan-500/40 bg-cyan-950/20 text-cyan-400', placeholder: '例如：ABC-1234', example: 'ABC-1234' },
@@ -146,7 +146,7 @@ export default function XuanxueCenterPage() {
                 <Button
                   onClick={handleGenerate}
                   disabled={!input.trim() || loading}
-                  className="w-full bg-purple-600 hover:bg-purple-500"
+                  className="w-full v33-cta"
                 >
                   {loading ? '解號中...' : <><Sparkles className="w-4 h-4 mr-1" />開始解號</>}
                 </Button>

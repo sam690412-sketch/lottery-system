@@ -10,6 +10,7 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router';
 import type { LotteryType } from '@/utils/lotteryConfig';
 import { getByRange, RANGE_OPTIONS, type AnalysisRange } from '@/utils/historyAnalysisEngine';
 import { getDataSourceKind } from '@/providers/historyProvider';
@@ -59,7 +60,7 @@ function parseNumbers(raw: string): number[] {
 }
 
 function scoreColor(v: number): string {
-  if (v >= 80) return 'text-orange-300';
+  if (v >= 80) return 'v33-data-text';
   if (v >= 60) return 'text-amber-300';
   return 'text-neutral-400';
 }
@@ -120,8 +121,11 @@ export default function SelectionAnalysisPage() {
         </p>
       </div>
 
-      <div className="rounded-lg border border-cyan-900/40 bg-cyan-950/15 px-3 py-2 text-xs text-cyan-200/80">
-        資料來源:{getDataSourceKind() === 'official' ? '官方' : '示意資料(非官方開獎)'}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <span className="v33-source-pill" data-tone={getDataSourceKind() === 'official' ? 'green' : 'yellow'}>
+          {getDataSourceKind() === 'official' ? '官方資料' : '示意資料 · 非官方開獎'}
+        </span>
+        <Link className="text-sm text-amber-300 hover:underline" to="/analysis-center">查看冷熱門排行</Link>
       </div>
 
       {/* 彩種 */}
@@ -129,10 +133,11 @@ export default function SelectionAnalysisPage() {
         {GAMES.map(([g, label]) => (
           <button
             key={g}
+            aria-pressed={game === g}
             onClick={() => setGame(g)}
             className={`rounded-lg border px-3 py-1.5 text-sm ${
               game === g
-                ? 'border-amber-500 bg-amber-600 text-white'
+                ? 'v33-active-filter'
                 : 'border-neutral-700 bg-neutral-900/50 text-neutral-300'
             }`}
           >
@@ -146,10 +151,11 @@ export default function SelectionAnalysisPage() {
         {RANGE_OPTIONS.map((r) => (
           <button
             key={String(r)}
+            aria-pressed={range === r}
             onClick={() => setRange(r)}
             className={`rounded-lg border px-3 py-1 text-xs ${
               range === r
-                ? 'border-purple-500 bg-purple-600 text-white'
+                ? 'v33-active-filter'
                 : 'border-neutral-700 bg-neutral-900/50 text-neutral-400'
             }`}
           >
@@ -163,14 +169,15 @@ export default function SelectionAnalysisPage() {
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          inputMode="numeric"
+          aria-label="輸入分析號碼"
+          inputMode="text"
           placeholder="輸入號碼,例如 05 08 12 21 31 36"
           className="flex-1 rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-600 focus:border-orange-500 focus:outline-none"
         />
         <button
           onClick={() => runAnalysis(game, range, numbers)}
           disabled={numbers.length === 0}
-          className="rounded-lg bg-orange-600 px-5 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
+          className="v33-cta min-h-11 rounded-lg px-5 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-40"
         >
           開始分析
         </button>
@@ -191,9 +198,9 @@ export default function SelectionAnalysisPage() {
       {result ? (
         <>
           {/* 整體評分 */}
-          <div className="rounded-2xl border border-white/[0.06] bg-neutral-900 p-6 text-center">
+          <div className="v33-analysis-score v33-panel p-6 text-center">
             <p className="text-xs text-neutral-500">整體統計完整度</p>
-            <p className="mt-1 text-5xl font-bold text-orange-400">
+            <p className="mt-1 text-5xl font-bold v33-data-text">
               {result.overallScore}
               <span className="ml-1 text-lg text-neutral-500">分</span>
             </p>
@@ -205,7 +212,7 @@ export default function SelectionAnalysisPage() {
             {SCORE_CARDS.map((c) => (
               <div
                 key={c.key}
-                className="rounded-xl border border-white/[0.06] bg-neutral-900 p-3 text-center"
+                className="v33-panel p-3 text-center"
               >
                 <p className="text-xs text-neutral-500">{c.label}</p>
                 <p className={`mt-1 text-2xl font-bold tabular-nums ${scoreColor(result[c.key] as number)}`}>
@@ -216,7 +223,7 @@ export default function SelectionAnalysisPage() {
           </div>
 
           {/* 分析報告 */}
-          <div className="rounded-2xl border border-white/[0.06] bg-neutral-900 p-4">
+          <div className="v33-panel p-4">
             <h3 className="mb-2 text-sm font-semibold text-neutral-200">分析報告</h3>
             <ul className="space-y-1.5">
               {result.reason.map((line, i) => (

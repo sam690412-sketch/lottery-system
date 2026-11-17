@@ -4,6 +4,7 @@
 // 純呈現元件;不取資料、不寫入、不改任何邏輯。
 // ============================================================
 import { memo } from 'react';
+import { ChevronDown, Info } from 'lucide-react';
 
 export type DataSourceSeverity = 'green' | 'yellow' | 'red';
 export type DataSourceMode = 'analysis' | 'prize';
@@ -21,6 +22,7 @@ export interface DataSourceBadgeProps {
   /** 官方來源更新時間(可選)。 */
   updatedAt?: string | null;
   className?: string;
+  compact?: boolean;
 }
 
 export interface DataSourceCopy {
@@ -90,9 +92,37 @@ function DataSourceBadgeBase({
   mode,
   updatedAt,
   className = '',
+  compact = false,
 }: DataSourceBadgeProps) {
   const isOfficial = sourceKind === 'official';
   const copy = getDataSourceCopy(mode, sourceKind, validation);
+
+  const overview = (
+    <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] text-gray-400 sm:grid-cols-4">
+      <span>總期數：<span className="text-gray-200">{totalRecords}</span></span>
+      <span>最新日期：<span className="text-gray-200">{latestDate || dateRange.to || '—'}</span></span>
+      <span>日期區間：<span className="text-gray-200">{dateRange.from || '—'} ~ {dateRange.to || '—'}</span></span>
+      <span>驗證狀態：<span className="text-gray-200">{validation.toUpperCase()}</span></span>
+    </div>
+  );
+
+  if (compact) {
+    return (
+      <details className={`v33-source-details ${className}`}>
+        <summary className="v33-source-pill" data-tone={validation === 'red' ? 'red' : isOfficial && validation === 'green' ? 'green' : 'yellow'}>
+          <Info size={14} aria-hidden="true" />
+          <span>{isOfficial ? `官方資料 · ${SEV_LABEL[validation]}`
+            : validation === 'red' ? '示意資料 · 驗證有錯誤' : copy.sourcePills.join(' · ')}</span>
+          <ChevronDown size={13} aria-hidden="true" />
+        </summary>
+        <div className="v33-source-overview v33-panel">
+          {overview}
+          {isOfficial && updatedAt && <p>更新時間：{updatedAt}</p>}
+          <p>{copy.warning ?? copy.reminder}</p>
+        </div>
+      </details>
+    );
+  }
 
   return (
     <div className={`rounded-xl border p-3 ${isOfficial ? 'border-emerald-800/50 bg-emerald-950/15' : 'border-amber-800/50 bg-amber-950/15'} ${className}`}>
@@ -119,13 +149,7 @@ function DataSourceBadgeBase({
         </span>
       </div>
 
-      {/* 資料概況 */}
-      <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] text-gray-400 sm:grid-cols-4">
-        <span>總期數：<span className="text-gray-200">{totalRecords}</span></span>
-        <span>最新日期：<span className="text-gray-200">{latestDate || dateRange.to || '—'}</span></span>
-        <span>日期區間：<span className="text-gray-200">{dateRange.from || '—'} ~ {dateRange.to || '—'}</span></span>
-        <span>驗證狀態：<span className="text-gray-200">{validation.toUpperCase()}</span></span>
-      </div>
+      {overview}
 
       {/* 情境提醒(集中文案) */}
       <p className="mt-2 text-[11px] text-gray-400">{copy.reminder}</p>

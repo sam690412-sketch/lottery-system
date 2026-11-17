@@ -40,7 +40,7 @@ export interface MissingItem {
   lastDrawDate: string;
 }
 
-export function calcMissingRank(draws: HistoricalDraw[], maxNum: number): MissingItem[] {
+export function calcMissingRank(draws: HistoricalDraw[], maxNum: number, topN = 20): MissingItem[] {
   const lastSeen: Record<number, number> = {};
   for (let i = 1; i <= maxNum; i++) lastSeen[i] = -1;
   draws.forEach((d, idx) => {
@@ -53,7 +53,7 @@ export function calcMissingRank(draws: HistoricalDraw[], maxNum: number): Missin
     lastDrawDate: lastIdx >= 0 ? draws[lastIdx].date : '無記錄',
   }));
   items.sort((a, b) => b.missingPeriods - a.missingPeriods);
-  return items.slice(0, 20).map((item, i) => ({ rank: i + 1, ...item }));
+  return items.slice(0, topN).map((item, i) => ({ rank: i + 1, ...item }));
 }
 
 // ---- 尾數分析 ----

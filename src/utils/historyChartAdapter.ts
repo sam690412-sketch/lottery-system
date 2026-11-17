@@ -17,10 +17,11 @@
  *    這「唯一一個」對應點即可,不要散落各處硬接。
  */
 
-import type {
-  ChartPoint,
-  ChartSeries,
-  DonutSlice,
+import {
+  CHART_ACCENT,
+  type ChartPoint,
+  type ChartSeries,
+  type DonutSlice,
 } from './chartTransform';
 
 /* ============================================================
@@ -122,8 +123,8 @@ export function toOddEvenDonut(stats: AnalysisStatsInput): DonutSlice[] {
   const even = stats.evenCount ?? 0;
   if (odd === 0 && even === 0) return [];
   return [
-    { label: '奇數', value: odd, color: '#f97316' },
-    { label: '偶數', value: even, color: '#60a5fa' },
+    { label: '奇數', value: odd, color: CHART_ACCENT },
+    { label: '偶數', value: even, color: '#F59E0B' },
   ];
 }
 
@@ -133,7 +134,7 @@ export function toBigSmallDonut(stats: AnalysisStatsInput): DonutSlice[] {
   const small = stats.smallCount ?? 0;
   if (big === 0 && small === 0) return [];
   return [
-    { label: '大', value: big, color: '#fb923c' },
+    { label: '大', value: big, color: CHART_ACCENT },
     { label: '小', value: small, color: '#a78bfa' },
   ];
 }

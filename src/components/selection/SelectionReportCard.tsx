@@ -108,43 +108,43 @@ function SelectionReportCardBase({
   };
 
   return (
-    <div className={`rounded-2xl border border-white/[0.06] bg-neutral-900 p-4 ${className}`}>
+    <div className={`v33-panel p-4 ${className}`}>
       {/* 標題列 */}
-      <div className="mb-3 flex items-start justify-between gap-3">
+      <div className="mb-3 flex flex-col items-start gap-3 sm:flex-row sm:justify-between">
         <div className="min-w-0">
           <h3 className="text-sm font-semibold text-neutral-100">{report.title}</h3>
           <p className="mt-0.5 text-[11px] text-neutral-600">
             產生時間 {new Date(report.generatedAt).toLocaleString()}
           </p>
         </div>
-        <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
+        <div className="flex min-w-0 flex-wrap items-center gap-1.5 sm:justify-end">
           <button
             onClick={handleCopy}
-            className="rounded-lg border border-orange-500/40 bg-orange-500/10 px-3 py-1 text-xs font-medium text-orange-300 transition-colors hover:bg-orange-500/20"
+            className="rounded-lg border border-orange-500/40 bg-orange-500/10 min-h-11 px-3 py-1 text-xs font-medium text-orange-300 transition-colors hover:bg-orange-500/20"
           >
             {copied ? '已複製' : '複製報告'}
           </button>
           <button
             onClick={handleDownloadTxt}
-            className="rounded-lg border border-neutral-700 bg-neutral-800/60 px-3 py-1 text-xs font-medium text-neutral-300 transition-colors hover:bg-neutral-700"
+            className="rounded-lg border border-neutral-700 bg-neutral-800/60 min-h-11 px-3 py-1 text-xs font-medium text-neutral-300 transition-colors hover:bg-neutral-700"
           >
             下載 TXT
           </button>
           <button
             onClick={handleDownloadHtml}
-            className="rounded-lg border border-neutral-700 bg-neutral-800/60 px-3 py-1 text-xs font-medium text-neutral-300 transition-colors hover:bg-neutral-700"
+            className="rounded-lg border border-neutral-700 bg-neutral-800/60 min-h-11 px-3 py-1 text-xs font-medium text-neutral-300 transition-colors hover:bg-neutral-700"
           >
             下載 HTML
           </button>
           <button
             onClick={handlePrint}
-            className="rounded-lg border border-neutral-700 bg-neutral-800/60 px-3 py-1 text-xs font-medium text-neutral-300 transition-colors hover:bg-neutral-700"
+            className="rounded-lg border border-neutral-700 bg-neutral-800/60 min-h-11 px-3 py-1 text-xs font-medium text-neutral-300 transition-colors hover:bg-neutral-700"
           >
             列印報告
           </button>
           <button
             onClick={handleShare}
-            className="rounded-lg border border-orange-500/40 bg-orange-500/10 px-3 py-1 text-xs font-medium text-orange-300 transition-colors hover:bg-orange-500/20"
+            className="rounded-lg border border-orange-500/40 bg-orange-500/10 min-h-11 px-3 py-1 text-xs font-medium text-orange-300 transition-colors hover:bg-orange-500/20"
           >
             分享報告
           </button>

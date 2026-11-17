@@ -1,4 +1,5 @@
 import { loadMetaDataRaw, saveMetaDataRaw, removeMetaDataRaw } from '@/repositories/businessDataStorage';
+import { userGetJson, userRemoveItem, userSetJson } from './userStorage';
 
 // ============================================================
 // V14.0 命理學派系統 - 7大學派 + 權重設定
@@ -225,11 +226,13 @@ const DAILY_META_WEIGHTS_KEY = 'lottery-daily-meta-weights';
 
 /** 保存今日命理權重 */
 export function saveDailyMetaWeights(weights: Record<number, number>): void {
+  userSetJson(DAILY_META_WEIGHTS_KEY, weights);
   saveMetaDataRaw(DAILY_META_WEIGHTS_KEY, weights);
 }
 
 /** 讀取今日命理權重 */
-export function loadDailyMetaWeights(): Record<number, number> | null {
+export function loadDailyMetaWeights({ ownOnly = false } = {}): Record<number, number> | null {
+  if (ownOnly) return userGetJson(DAILY_META_WEIGHTS_KEY, null);
   try {
     const raw = loadMetaDataRaw(DAILY_META_WEIGHTS_KEY);
     return raw ? JSON.parse(raw) : null;
@@ -238,6 +241,7 @@ export function loadDailyMetaWeights(): Record<number, number> | null {
 
 /** 清除今日命理權重 */
 export function clearDailyMetaWeights(): void {
+  userRemoveItem(DAILY_META_WEIGHTS_KEY);
   removeMetaDataRaw(DAILY_META_WEIGHTS_KEY);
 }
 

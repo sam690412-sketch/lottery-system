@@ -92,7 +92,7 @@ export default function DreamPage() {
   return (
     <div className="space-y-6 pb-24">
       <div>
-        <h1 className="text-2xl font-bold text-gray-100 flex items-center gap-2"><Moon className="w-6 h-6 text-indigo-400" />夢境選牌</h1>
+        <h1 className="text-2xl font-bold text-gray-100 flex items-center gap-2"><Moon className="w-6 h-6 v33-mystic-accent" />夢境選牌</h1>
         <p className="text-sm text-gray-500">6大學派解析夢境，轉為選號權重</p>
       </div>
 
@@ -109,7 +109,7 @@ export default function DreamPage() {
                   onClick={() => toggleSchool(s.id)}
                   className={`flex items-center gap-1 px-2 py-1 rounded text-xs border transition ${
                     isSelected
-                      ? 'border-indigo-500 bg-indigo-950/30 text-indigo-300'
+                      ? 'v33-mystic-tag'
                       : 'border-gray-700 bg-gray-800/30 text-gray-500'
                   }`}
                 >
@@ -120,14 +120,14 @@ export default function DreamPage() {
             })}
           </div>
           {selectedSchools.includes('ai') && (
-            <Badge className="mt-2 bg-amber-600/20 text-amber-400 border-amber-700 text-xs">AI綜合：自動加權所有已勾選學派</Badge>
+            <Badge className="mt-2 v33-mystic-tag text-xs">AI綜合：自動加權所有已勾選學派</Badge>
           )}
         </CardContent>
       </Card>
 
       {/* 輸入 */}
       <Card className="border border-indigo-900/30 bg-gray-900/80">
-        <CardHeader className="pb-2"><CardTitle className="text-indigo-400 text-lg flex items-center gap-2"><BookOpen className="w-5 h-5" />夢境輸入</CardTitle></CardHeader>
+        <CardHeader className="pb-2"><CardTitle className="v33-mystic-accent text-lg flex items-center gap-2"><BookOpen className="w-5 h-5" />夢境輸入</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <div>
             <Label className="text-gray-300">我夢到什麼？</Label>
@@ -137,9 +137,9 @@ export default function DreamPage() {
             <Label className="text-gray-300">夢境感覺</Label>
             <div className="flex gap-2 mt-1">
               {(['吉', '普通', '不安'] as Emotion[]).map(e => (
-                <Button key={e} size="sm" variant={emotion === e ? 'default' : 'outline'}
+                <Button key={e} size="sm" variant="outline" aria-pressed={emotion === e}
                   onClick={() => setEmotion(e)}
-                  className={emotion === e ? 'bg-indigo-600 text-white' : 'border-gray-600 text-gray-400'}>{e}</Button>
+                  className={emotion === e ? 'v33-mystic-tag' : 'border-gray-600 text-gray-400'}>{e}</Button>
               ))}
             </div>
           </div>
@@ -148,7 +148,7 @@ export default function DreamPage() {
             <Input value={numbers} onChange={e => setNumbers(e.target.value)} placeholder="例如：7, 12, 23" className="bg-gray-800 border-gray-700 text-gray-100 mt-1" />
           </div>
           <div className="flex gap-2">
-            <Button onClick={handleAnalyze} className="bg-indigo-600 hover:bg-indigo-500 text-white">
+            <Button onClick={handleAnalyze} className="v33-cta">
               <Sparkles className="w-4 h-4 mr-1" /> 解析夢境（{selectedSchools.length}學派）
             </Button>
             {results && (
@@ -164,7 +164,7 @@ export default function DreamPage() {
       {results && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-indigo-400">解析結果（{results.filter(r => selectedSchools.includes(r.school)).length}個已勾選學派）</h2>
+            <h2 className="text-lg font-bold v33-mystic-accent">解析結果（{results.filter(r => selectedSchools.includes(r.school)).length}個已勾選學派）</h2>
             <Button
               size="sm"
               variant="outline"
@@ -187,7 +187,7 @@ export default function DreamPage() {
             <Card key={r.school} className={`border ${r.school === 'ai' ? 'border-amber-700 bg-amber-950/10' : 'border-indigo-800/30 bg-gray-900/60'}`}>
               <CardContent className="p-4 space-y-2">
                 <div className="flex items-center justify-between">
-                  <p className={`font-bold ${r.school === 'ai' ? 'text-amber-400' : 'text-indigo-400'}`}>{r.schoolName}</p>
+                  <p className={`font-bold ${r.school === 'ai' ? 'text-amber-400' : 'v33-mystic-accent'}`}>{r.schoolName}</p>
                   {r.school === 'ai' && <Badge className="bg-amber-600 text-white text-xs">AI綜合</Badge>}
                 </div>
                 <p className="text-xs text-gray-500">{r.basis}</p>

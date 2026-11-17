@@ -1,181 +1,242 @@
-// ============================================================
-// V12 我的號碼 - 管理養號、生日、車牌等個人化來源
-// ============================================================
-import { useState, useCallback } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+import { useState, type FormEvent } from 'react';
+import { Link, useSearchParams } from 'react-router';
+import { ArrowRight, ChartNoAxesCombined, Heart, Lock, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import type { LotteryType } from '@/utils/lotteryConfig';
-import { getConfig } from '@/utils/lotteryConfig';
-import { userGetJson, userSetJson } from '@/utils/userStorage';
+import { getConfig, LOTTERY_CONFIGS, type LotteryType } from '@/utils/lotteryConfig';
+import { userGetJson, userSetJson, USER_KEYS } from '@/utils/userStorage';
 import { hasPermission } from '@/utils/permissions';
-import { Heart, Plus, Trash2, AlertCircle, Lock } from 'lucide-react';
+import { analysisLink, type SavedNumbers } from '@/utils/quickPick';
 
-interface KeepSet {
-  id: string;
-  name: string;
-  numbers: number[];
-  type: LotteryType;
-  note: string;
+const STORAGE_KEY = USER_KEYS.KEEP_SETS;
+const GAMES = Object.keys(LOTTERY_CONFIGS) as LotteryType[];
+const DISPLAY_DATE = new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'Asia/Taipei', year: 'numeric', month: '2-digit', day: '2-digit',
+});
+
+function savedDate(id: string) {
+  const timestamp = Number(String(id).split('-')[0]);
+  const date = new Date(timestamp);
+  return timestamp > 1e12 && Number.isFinite(date.getTime()) ? DISPLAY_DATE.format(date) : undefined;
 }
 
-const STORAGE_KEY = 'v12-keep-sets';
+function SavedCard({ set, confirmDelete, onRequestDelete, onCancelDelete, onDelete }: {
+  set: SavedNumbers;
+  confirmDelete: boolean;
+  onRequestDelete: () => void;
+  onCancelDelete: () => void;
+  onDelete: () => void;
+}) {
+  const config = getConfig(set.type);
+  const date = savedDate(set.id);
+  const legacyZone = config.specialMode === 'separate'
+    ? set.note?.match(/^由打造流程產生・第二區 ([1-8])$/)?.[1] : undefined;
+  const secondZone = set.secondZone ?? (legacyZone ? Number(legacyZone) : undefined);
+  const note = legacyZone ? '由打造流程產生' : set.note;
 
-/** 由收藏組建立 /selection-analysis 連結,帶入彩種、號碼、日期(由 id 反推)、備註。 */
-function buildAnalysisHref(set: KeepSet): string {
-  const params = new URLSearchParams();
-  params.set('game', set.type);
-  params.set('numbers', set.numbers.join(','));
-  if (set.note) params.set('note', set.note);
-  const ts = Number(set.id);
-  if (Number.isFinite(ts) && ts > 1e12) {
-    params.set('date', new Date(ts).toISOString().slice(0, 10));
-  }
-  return `/selection-analysis?${params.toString()}`;
+  return (
+    <article className="v33-saved-card v33-panel">
+      <header>
+        <div className="v33-saved-context">
+          <span>{config.name}</span>
+          {date && <time dateTime={date}>{date}</time>}
+        </div>
+        <h2>{set.name}</h2>
+      </header>
+      <div className="v33-saved-values">
+        <ul className="v33-saved-balls" aria-label={config.category === 'digit' ? '依位序排列的收藏數字' : '收藏主號'}>
+          {set.numbers.map((number, index) => (
+            <li key={index} className="v33-sphere v33-saved-ball">
+              <span className="v33-ball-face">{config.category === 'digit' ? number : String(number).padStart(2, '0')}</span>
+            </li>
+          ))}
+        </ul>
+        {secondZone !== undefined && (
+          <div className="v33-saved-zone">
+            <span>第二區</span>
+            <span className="v33-sphere v33-saved-ball v33-ball-data">
+              <span className="v33-ball-face">{String(secondZone).padStart(2, '0')}</span>
+            </span>
+          </div>
+        )}
+      </div>
+      {note && <p className="v33-saved-note">{note}</p>}
+      <footer className="v33-saved-actions">
+        <Link to={analysisLink(set.type, set.numbers, set.note, date)} className="v33-btn subtle">
+          <ChartNoAxesCombined size={17} aria-hidden="true" />
+          {config.category === 'lotto6' ? '分析這組' : '查看彩種分析'}
+        </Link>
+        <button type="button" className="v33-saved-remove" aria-label={'刪除' + set.name}
+          aria-expanded={confirmDelete} onClick={confirmDelete ? onCancelDelete : onRequestDelete}>
+          <Trash2 size={17} aria-hidden="true" />
+        </button>
+      </footer>
+      {confirmDelete && (
+        <div className="v33-saved-confirm">
+          <p>確定刪除這組收藏？</p>
+          <Button type="button" variant="outline" onClick={onCancelDelete}>取消</Button>
+          <Button type="button" variant="destructive" onClick={onDelete}>確認刪除</Button>
+        </div>
+      )}
+    </article>
+  );
 }
 
 export default function MyNumbersPage() {
-  const [lotteryType, setLotteryType] = useState<LotteryType>('power');
-  const [keepSets, setKeepSets] = useState<KeepSet[]>(() => userGetJson(STORAGE_KEY, []));
+  const [params, setParams] = useSearchParams();
+  const requested = params.get('game');
+  const lotteryType = GAMES.find(game => game === requested);
+  const canSave = hasPermission('canSaveNumbers');
+  const [keepSets, setKeepSets] = useState<SavedNumbers[]>(() => userGetJson(STORAGE_KEY, []));
   const [showAdd, setShowAdd] = useState(false);
+  const [draftGame, setDraftGame] = useState<LotteryType>('power');
   const [newName, setNewName] = useState('');
   const [newNumbers, setNewNumbers] = useState('');
   const [newNote, setNewNote] = useState('');
-  const canSave = hasPermission('canSaveNumbers');
+  const [validation, setValidation] = useState('');
+  const [feedback, setFeedback] = useState('');
+  const [pendingDelete, setPendingDelete] = useState<string | null>(null);
+  const draftConfig = getConfig(draftGame);
+  const visibleSets = lotteryType ? keepSets.filter(set => set.type === lotteryType) : keepSets;
 
-  const config = getConfig(lotteryType);
+  function openAdd() {
+    setDraftGame(lotteryType ?? 'power');
+    setValidation('');
+    setFeedback('');
+    setShowAdd(true);
+  }
 
-  const saveSets = useCallback((sets: KeepSet[]) => {
-    setKeepSets(sets);
-    userSetJson(STORAGE_KEY, sets);
-  }, []);
-
-  const addSet = () => {
-    const nums = newNumbers.split(/[,\s]+/).map(Number).filter(n => !isNaN(n) && n >= config.mainMin && n <= config.mainMax);
-    if (nums.length < 2) return;
-    const newSet: KeepSet = {
-      id: Date.now().toString(),
-      name: newName || `養號組 ${keepSets.length + 1}`,
-      numbers: nums,
-      type: lotteryType,
-      note: newNote,
+  function addSet(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!canSave) return;
+    const numbers = newNumbers.trim().split(/[,，\s]+/).filter(Boolean).map(Number);
+    if (numbers.length < 2 || numbers.some(number => !Number.isInteger(number) || number < draftConfig.mainMin || number > draftConfig.mainMax)) {
+      setValidation(`請輸入至少兩個 ${draftConfig.mainMin}–${draftConfig.mainMax} 的有效號碼。`);
+      return;
+    }
+    const latest = userGetJson<SavedNumbers[]>(STORAGE_KEY, []);
+    const newSet: SavedNumbers = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      name: newName.trim() || `養號組 ${latest.length + 1}`,
+      numbers,
+      type: draftGame,
+      note: newNote.trim(),
     };
-    saveSets([newSet, ...keepSets]);
-    setNewName(''); setNewNumbers(''); setNewNote(''); setShowAdd(false);
-  };
+    userSetJson(STORAGE_KEY, [newSet, ...latest]);
+    const stored = userGetJson<SavedNumbers[]>(STORAGE_KEY, []);
+    if (!stored.some(set => set.id === newSet.id)) {
+      setValidation('本機儲存未完成，請重試。');
+      return;
+    }
+    setKeepSets(stored);
+    setNewName('');
+    setNewNumbers('');
+    setNewNote('');
+    setValidation('');
+    setShowAdd(false);
+    setParams({ game: draftGame });
+    setFeedback('已新增收藏。');
+  }
 
-  const deleteSet = (id: string) => {
-    saveSets(keepSets.filter(s => s.id !== id));
-  };
-
-  const filteredSets = keepSets.filter(s => s.type === lotteryType);
-
-  if (!canSave) {
-    return (
-      <div className="space-y-6 pb-24">
-        <h1 className="text-2xl font-bold text-gray-100">我的號碼</h1>
-        <Card className="border border-gray-800 bg-gray-900/80">
-          <CardContent className="p-6 text-center">
-            <Lock className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-            <p className="text-gray-400">註冊免費會員即可保存養號</p>
-            <p className="text-sm text-gray-500 mt-2">訪客模式下養號不會被保存</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
+  function deleteSet(id: string) {
+    if (!canSave) return;
+    const latest = userGetJson<SavedNumbers[]>(STORAGE_KEY, []);
+    userSetJson(STORAGE_KEY, latest.filter(set => set.id !== id));
+    const stored = userGetJson<SavedNumbers[]>(STORAGE_KEY, []);
+    if (stored.some(set => set.id === id)) {
+      setFeedback('未能移除收藏，請重試。');
+      return;
+    }
+    setKeepSets(stored);
+    setPendingDelete(null);
+    setFeedback('已刪除收藏。');
   }
 
   return (
-    <div className="space-y-6 pb-24">
-      <h1 className="text-2xl font-bold text-gray-100">我的號碼</h1>
-      <p className="text-sm text-gray-500">管理你的固定養號、生日、車牌等個人化來源</p>
-      <p className="text-xs text-amber-400/80 rounded-lg border border-amber-900/40 bg-amber-950/15 px-3 py-2">
-        訪客模式僅保存在本機瀏覽器，清除瀏覽器資料或換裝置後可能消失；登入會員後可永久保存。
-      </p>
-
-      {/* 彩種切換 */}
-      <div className="flex gap-2">
-        {(['power', 'lotto649', 'daily539'] as LotteryType[]).map(t => (
-          <Button
-            key={t}
-            size="sm"
-            variant={lotteryType === t ? 'default' : 'outline'}
-            onClick={() => setLotteryType(t)}
-            className={lotteryType === t ? 'bg-amber-600' : 'border-gray-700 text-gray-400'}
-          >
-            {t === 'power' ? '威力彩' : t === 'lotto649' ? '大樂透' : '今彩539'}
-          </Button>
-        ))}
-      </div>
-
-      {/* 新增按鈕 */}
-      {!showAdd && (
-        <Button onClick={() => setShowAdd(true)} className="w-full bg-gray-800 hover:bg-gray-700">
-          <Plus className="w-4 h-4 mr-2" /> 新增養號組
-        </Button>
-      )}
-
-      {/* 新增表單 */}
-      {showAdd && (
-        <Card className="border border-gray-800 bg-gray-900/80">
-          <CardContent className="p-4 space-y-3">
-            <Label className="text-gray-300">名稱</Label>
-            <Input value={newName} onChange={e => setNewName(e.target.value)} placeholder="例如：我的固定號" className="bg-gray-800 border-gray-700 text-gray-100" />
-            <Label className="text-gray-300">號碼（用逗號或空格分隔）</Label>
-            <Input value={newNumbers} onChange={e => setNewNumbers(e.target.value)} placeholder={`${config.mainMin}-${config.mainMax} 之間`} className="bg-gray-800 border-gray-700 text-gray-100" />
-            <Label className="text-gray-300">備註</Label>
-            <Input value={newNote} onChange={e => setNewNote(e.target.value)} placeholder="選填" className="bg-gray-800 border-gray-700 text-gray-100" />
-            <div className="flex gap-2">
-              <Button onClick={addSet} className="bg-emerald-600 hover:bg-emerald-500">儲存</Button>
-              <Button variant="outline" onClick={() => setShowAdd(false)} className="border-gray-700 text-gray-400">取消</Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* 養號列表 */}
-      <div className="space-y-2">
-        {filteredSets.length === 0 && (
-          <Alert className="border-gray-800 bg-gray-900/40">
-            <AlertCircle className="w-4 h-4 text-gray-500" />
-            <AlertDescription className="text-gray-500">尚無養號，請點擊上方按鈕新增</AlertDescription>
-          </Alert>
+    <div className="v33-workbench v33-saved-page">
+      <header className="v33-saved-header">
+        <div>
+          <h1 className="v33-workbench-title"><Heart size={25} aria-hidden="true" />我的收藏</h1>
+          <p>整理快速選號、打造結果與自訂養號。</p>
+        </div>
+        {canSave && !showAdd && (
+          <button type="button" onClick={openAdd} className="v33-btn primary">
+            <Plus size={18} aria-hidden="true" /> 新增養號組
+          </button>
         )}
-        {filteredSets.map(set => (
-          <Card key={set.id} className="border border-gray-800 bg-gray-900/60">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <Heart className="w-4 h-4 text-rose-400" />
-                    <p className="font-bold text-gray-200">{set.name}</p>
-                  </div>
-                  <div className="flex flex-wrap gap-1 mt-2">
-                    {set.numbers.map(n => (
-                      <Badge key={n} variant="outline" className="border-amber-500/30 text-amber-400">{String(n).padStart(2, '0')}</Badge>
-                    ))}
-                  </div>
-                  {set.note && <p className="text-xs text-gray-500 mt-1">{set.note}</p>}
+      </header>
+
+      {!canSave ? (
+        <section className="v33-saved-empty v33-panel">
+          <div className="v33-saved-emblem"><Lock size={24} aria-hidden="true" /></div>
+          <h2>登入後即可管理收藏</h2>
+          <p>使用免費會員帳號保存與分析你的號碼。</p>
+          <Link className="v33-btn primary" to="/member">前往會員中心 <ArrowRight size={16} aria-hidden="true" /></Link>
+        </section>
+      ) : (
+        <>
+          <p className="v33-saved-local">收藏保存在目前的瀏覽器。</p>
+          <div className="v33-saved-filters" role="group" aria-label="收藏彩種">
+            <button type="button" aria-pressed={!lotteryType}
+              onClick={() => { setParams({}); setPendingDelete(null); }}>全部 <span>{keepSets.length}</span></button>
+            {GAMES.map(game => (
+              <button key={game} type="button" aria-pressed={lotteryType === game}
+                onClick={() => { setParams({ game }); setPendingDelete(null); }}>
+                {getConfig(game).name} <span>{keepSets.filter(set => set.type === game).length}</span>
+              </button>
+            ))}
+          </div>
+
+          {showAdd && (
+            <form className="v33-saved-form v33-panel" onSubmit={addSet}>
+              <h2>新增養號組</h2>
+              <div className="v33-saved-fields">
+                <div><Label htmlFor="keep-game">彩種</Label>
+                  <select id="keep-game" value={draftGame} onChange={event => {
+                    setDraftGame(event.target.value as LotteryType);
+                    setValidation('');
+                  }}>
+                    {GAMES.map(game => <option key={game} value={game}>{getConfig(game).name}</option>)}
+                  </select>
                 </div>
-                <div className="flex flex-col items-end gap-2 shrink-0">
-                  <a
-                    href={buildAnalysisHref(set)}
-                    className="inline-flex items-center justify-center rounded-lg border border-orange-500/40 bg-orange-500/10 px-3 py-1 text-xs font-medium text-orange-300 transition-colors hover:bg-orange-500/20"
-                  >
-                    分析
-                  </a>
-                  <button onClick={() => deleteSet(set.id)} className="text-gray-600 hover:text-red-400 transition">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
+                <div><Label htmlFor="keep-name">名稱</Label>
+                  <Input id="keep-name" value={newName} onChange={event => setNewName(event.target.value)} placeholder="例如：我的固定號" /></div>
+                <div><Label htmlFor="keep-numbers">號碼（以逗號或空格分隔）</Label>
+                  <Input id="keep-numbers" value={newNumbers} onChange={event => setNewNumbers(event.target.value)}
+                    aria-invalid={validation.startsWith('請輸入') || undefined} aria-describedby={validation ? 'keep-validation' : undefined}
+                    placeholder={`${draftConfig.mainMin}–${draftConfig.mainMax}`} /></div>
+                <div><Label htmlFor="keep-note">備註</Label>
+                  <Input id="keep-note" value={newNote} onChange={event => setNewNote(event.target.value)} placeholder="選填" /></div>
               </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+              {validation && <p id="keep-validation" role="alert">{validation}</p>}
+              <div className="v33-saved-actions">
+                <button type="submit" className="v33-btn primary">儲存收藏</button>
+                <button type="button" className="v33-btn subtle" onClick={() => setShowAdd(false)}>取消</button>
+              </div>
+            </form>
+          )}
+
+          {feedback && <p className="v33-saved-feedback" role="status">{feedback}</p>}
+          {visibleSets.length === 0 ? (
+            <section className="v33-saved-empty v33-panel">
+              <div className="v33-saved-emblem"><Heart size={24} aria-hidden="true" /></div>
+              <h2>{lotteryType ? `還沒有${getConfig(lotteryType).name}收藏` : '還沒有收藏號碼'}</h2>
+              <p>從快速選號或打造號碼收藏結果，也可以手動新增一組。</p>
+              <Link className="v33-btn subtle" to="/">前往快速選號 <ArrowRight size={16} aria-hidden="true" /></Link>
+            </section>
+          ) : (
+            <div className="v33-saved-grid">
+              {visibleSets.map(set => (
+                <SavedCard key={set.id} set={set} confirmDelete={pendingDelete === set.id}
+                  onRequestDelete={() => setPendingDelete(set.id)}
+                  onCancelDelete={() => setPendingDelete(null)}
+                  onDelete={() => deleteSet(set.id)} />
+              ))}
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }

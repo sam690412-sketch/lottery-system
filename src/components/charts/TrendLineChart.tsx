@@ -19,6 +19,7 @@ import { ChartLegend } from './ChartLegend';
 import {
   buildAreaPath,
   buildLinePath,
+  CHART_ACCENT,
   CHART_COLORS,
   colorAt,
   defaultFormatLabel,
@@ -172,8 +173,8 @@ function TrendLineChartBase({
         >
           <defs>
             <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={view.lines[0]?.color ?? '#f97316'} stopOpacity="0.28" />
-              <stop offset="100%" stopColor={view.lines[0]?.color ?? '#f97316'} stopOpacity="0" />
+              <stop offset="0%" stopColor={view.lines[0]?.color ?? CHART_ACCENT} stopOpacity="0.28" />
+              <stop offset="100%" stopColor={view.lines[0]?.color ?? CHART_ACCENT} stopOpacity="0" />
             </linearGradient>
           </defs>
 

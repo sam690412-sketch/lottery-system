@@ -3,6 +3,7 @@
 // ============================================================
 
 import { loadDreamDataRaw, saveDreamDataRaw, removeDreamDataRaw } from '@/repositories/businessDataStorage';
+import { userGetJson, userRemoveItem, userSetJson } from './userStorage';
 
 export type DreamSchoolId = 'zhougong' | 'jung' | 'freud' | 'symbol' | 'wuxing' | 'ai';
 
@@ -275,12 +276,14 @@ const DAILY_DREAM_CONTENT_KEY = 'lottery-daily-dream-content';
 
 /** 保存今日夢境權重 */
 export function saveDailyDreamWeights(weights: Record<number, number>, content: string): void {
+  userSetJson(DAILY_DREAM_WEIGHTS_KEY, weights);
   saveDreamDataRaw(DAILY_DREAM_WEIGHTS_KEY, weights);
   saveDreamDataRaw(DAILY_DREAM_CONTENT_KEY, content);
 }
 
 /** 讀取今日夢境權重 */
-export function loadDailyDreamWeights(): Record<number, number> | null {
+export function loadDailyDreamWeights({ ownOnly = false } = {}): Record<number, number> | null {
+  if (ownOnly) return userGetJson(DAILY_DREAM_WEIGHTS_KEY, null);
   try {
     const raw = loadDreamDataRaw(DAILY_DREAM_WEIGHTS_KEY);
     return raw ? JSON.parse(raw) : null;
@@ -294,6 +297,7 @@ export function loadDailyDreamContent(): string {
 
 /** 清除今日夢境權重 */
 export function clearDailyDreamWeights(): void {
+  userRemoveItem(DAILY_DREAM_WEIGHTS_KEY);
   removeDreamDataRaw(DAILY_DREAM_WEIGHTS_KEY);
   removeDreamDataRaw(DAILY_DREAM_CONTENT_KEY);
 }

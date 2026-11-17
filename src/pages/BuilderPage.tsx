@@ -1,16 +1,15 @@
 // ============================================================
-// V16-1 — 打造我的專屬號碼（Wizard 空殼）
-// ⚠️ 本階段只做頁面與步驟流程；不接統計/夢境/生日/命理/AI 引擎。
-// ⚠️ 不做任何 VIP/Admin gating、不碰權限/付款。
+// 打造我的專屬號碼
 // ============================================================
 import { useState } from 'react';
-import { useNavigate } from 'react-router';
+import { Link, useNavigate, useSearchParams } from 'react-router';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, SkipForward, RotateCcw, Sparkles } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight, Filter, SkipForward, RotateCcw, Sparkles } from 'lucide-react';
 import StepIndicator, { BUILDER_STEPS } from '@/components/builder/StepIndicator';
-import type { LotteryType } from '@/utils/lotteryConfig';
-import { userGetJson, userSetJson } from '@/utils/userStorage';
+import { analysisLink, type SavedNumbers } from '@/utils/quickPick';
+import { getConfig, type LotteryType } from '@/utils/lotteryConfig';
+import { userGetJson, userSetJson, USER_KEYS } from '@/utils/userStorage';
 import { recordPreference, recordCollectionHistory, buildPersonalSeed, buildExplanation, recordAnalysisHistory } from '@/utils/personalProfile';
 // V16-2: 統計整合（只呼叫既有 statistics.ts）
 import { runBuilderStatistics, buildBaseNumberPool, type BuilderStatsResult, type BaseNumberPool } from '@/utils/builderStats';
@@ -27,16 +26,21 @@ import { getPermGuardSource, computeBackendPermission } from '@/utils/backendPer
 interface StepContent {
   title: string;
   desc: string;
-  placeholder: string;
 }
 
+const LOTTERIES = [
+  { id: 'power', jackpot: '頭獎須對中第一區 6 號及第二區 1 號', ball: '' },
+  { id: 'lotto649', jackpot: '頭獎須對中 6 個主號', ball: 'v33-ball-silver' },
+  { id: 'daily539', jackpot: '頭獎須對中 5 個主號', ball: 'v33-ball-data' },
+] as const;
+
 const STEP_CONTENT: StepContent[] = [
-  { title: '今天想怎麼分析？先選一個彩種', desc: '選好彩種，我就一步一步陪你打造今天的號碼 —— 統計先打底，夢境、生日、命理你想加再加。', placeholder: '（在這裡選擇 威力彩 / 大樂透 / 今彩539）' },
-  { title: '先用歷史資料建立基礎號碼池', desc: '系統會先看熱號、冷號與遺漏值，建立第一版號碼池。', placeholder: '（在這裡顯示統計分析與基礎號碼池）' },
-  { title: '想加入夢境嗎？', desc: '例如夢見水、蛇、飛機，系統會把夢境轉成號碼影響。可以略過。', placeholder: '（在這裡輸入夢境並顯示影響的號碼）' },
-  { title: '加入生日或紀念日', desc: '生日會變成你的個人號碼權重。可以略過。', placeholder: '（在這裡輸入生日資料並顯示影響的號碼）' },
-  { title: '加入命理分析', desc: 'VIP 可使用八字、梅花易數、紫微等方式調整號碼。可以略過。', placeholder: '（在這裡進行命理分析）' },
-  { title: '你的專屬號碼完成了', desc: '這組號碼整合了你選擇的統計、夢境、生日與命理來源。', placeholder: '（在這裡顯示來源與最終推薦號碼）' },
+  { title: '先選擇要打造的彩種', desc: '從歷史統計建立候選池，再選擇是否加上個人條件。' },
+  { title: '先用歷史資料建立基礎號碼池', desc: '系統會先看熱號、冷號與遺漏值，建立第一版號碼池。' },
+  { title: '想加入夢境嗎？', desc: '例如夢見水、蛇、飛機，系統會把夢境轉成號碼影響。可以略過。' },
+  { title: '加入生日或紀念日', desc: '生日會變成你的個人號碼權重。可以略過。' },
+  { title: '加入命理分析', desc: 'VIP 可使用八字、梅花易數、紫微等方式調整號碼。可以略過。' },
+  { title: '你的專屬號碼完成了', desc: '這組號碼整合了你選擇的統計、夢境、生日與命理來源。' },
 ];
 
 // V16-2.5: 影響強度箭頭（純顯示，從既有 weight 衍生，不重新計算）
@@ -86,32 +90,40 @@ function renderProgress(rows: { label: string; pct: number }[]) {
 
 export default function BuilderPage() {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const requested = params.get('game');
   const [step, setStep] = useState(0);
+  const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const last = BUILDER_STEPS.length - 1;
 
   // V16-2: 彩種選擇 + 統計分析狀態
-  const [lotteryType, setLotteryType] = useState<LotteryType | null>(null);
+  const [lotteryType, setLotteryType] = useState<LotteryType | null>(() => requested === 'power' || requested === 'lotto649' || requested === 'daily539' ? requested : null);
   // QA-FIX-1: 收藏到「我的號碼」(同一套 v12-keep-sets storage)。訪客本機暫存。
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saved' | 'duplicate'>('idle');
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saved' | 'duplicate' | 'failed'>('idle');
   const saveToMyNumbers = () => {
     if (!finalResult || !lotteryType) return;
-    const KEY = 'v12-keep-sets';
-    type KeepSet = { id: string; name: string; numbers: number[]; type: LotteryType; note: string };
-    const existing = userGetJson<KeepSet[]>(KEY, []);
+    const existing = userGetJson<SavedNumbers[]>(USER_KEYS.KEEP_SETS, []);
     const nums = [...finalResult.mainNumbers];
     // 重複偵測：同彩種 + 同主號（排序後比對）
     const sortedKey = (a: number[]) => [...a].sort((x, y) => x - y).join(',');
     const isDup = existing.some((s) => s.type === lotteryType && sortedKey(s.numbers) === sortedKey(nums));
     if (isDup) { setSaveStatus('duplicate'); return; }
-    const special = finalResult.specialNumber != null ? `特別號 ${finalResult.specialNumber}` : '';
-    const newSet: KeepSet = {
+    const secondZone = getConfig(lotteryType).specialMode === 'separate' ? finalResult.specialNumber : undefined;
+    const special = secondZone === undefined && finalResult.specialNumber !== undefined
+      ? `特別號 ${finalResult.specialNumber}` : '';
+    const newSet: SavedNumbers = {
       id: Date.now().toString(),
       name: `打造號碼 ${new Date().toLocaleDateString('zh-TW')}`,
       numbers: nums,
       type: lotteryType,
       note: ['由打造流程產生', special].filter(Boolean).join('・'),
+      secondZone,
     };
-    userSetJson(KEY, [newSet, ...existing]);
+    userSetJson(USER_KEYS.KEEP_SETS, [newSet, ...existing]);
+    if (!userGetJson<SavedNumbers[]>(USER_KEYS.KEEP_SETS, []).some(set => set.id === newSet.id)) {
+      setSaveStatus('failed');
+      return;
+    }
     // V19 Sprint-4: 記錄偏好記憶 + 收藏歷史（localStorage，不建後端）
     recordPreference({ lottery: lotteryType, collected: nums });
     recordCollectionHistory(`${lotteryType} · ${nums.slice(0, 3).join(',')}…`);
@@ -149,12 +161,6 @@ export default function BuilderPage() {
   // 預設 localStorage 模式時，本 wizard 命理視為「可嘗試」（與既有 MetaphysicsPage 一致性由 V16-4 後另行對齊）。
   const metaUnlocked = permSource === 'backend' ? metaPerm.state === 'allow' : true;
 
-  const LOTTERIES: { id: LotteryType; name: string }[] = [
-    { id: 'power', name: '威力彩' },
-    { id: 'lotto649', name: '大樂透' },
-    { id: 'daily539', name: '今彩539' },
-  ];
-
   // 進入 Step 2（統計）時自動執行；只呼叫既有 statistics.ts
   function runStatistics(type: LotteryType) {
     setAnalysisLoading(true);
@@ -171,7 +177,7 @@ export default function BuilderPage() {
 
   // V16-3: 夢境疊加（呼叫既有 dream 引擎，疊加到 currentNumberPool）
   function handleApplyDream() {
-    if (!currentNumberPool) return;
+    if (!currentNumberPool || !dreamText.trim() || dreamApplied) return;
     const r = applyDreamToPool(currentNumberPool, dreamText);
     setCurrentNumberPool(r.pool);
     setDreamInfluences(r.influences);
@@ -181,7 +187,7 @@ export default function BuilderPage() {
 
   // V16-3: 生日疊加（呼叫既有 personalNumber 引擎，疊加到 currentNumberPool）
   function handleApplyBirthday() {
-    if (!currentNumberPool) return;
+    if (!currentNumberPool || !birthday || birthday > today || birthdayApplied) return;
     const r = applyBirthdayToPool(currentNumberPool, birthday);
     setCurrentNumberPool(r.pool);
     setBirthdayInfluences(r.influences);
@@ -191,7 +197,7 @@ export default function BuilderPage() {
 
   // V16-4: 命理疊加（呼叫既有 metaphysicsSchools 引擎，疊加到 currentNumberPool）
   function handleApplyMetaphysics() {
-    if (!currentNumberPool) return;
+    if (!currentNumberPool || !metaMethod || !metaBirthday || metaApplied) return;
     const r = applyMetaphysicsToPool(currentNumberPool, { birthday: metaBirthday, method: metaMethod, question: metaQuestion });
     setCurrentNumberPool(r.pool);
     setMetaInfluences(r.influences);
@@ -199,17 +205,23 @@ export default function BuilderPage() {
     setMetaApplied(true);
   }
 
-  const goNext = () => {
-    if (step === 0 && !lotteryType) return;
-    // 避免在 React state updater 內執行分析與其他 setState。
-    if (step === 0 && lotteryType && !analysisResult) runStatistics(lotteryType);
-    setStep(Math.min(last, step + 1));
+  const goToStep = (next: number) => {
+    if (next > 0 && !lotteryType) return;
+    if (next > 0 && lotteryType && !analysisResult) runStatistics(lotteryType);
+    if (next > step) {
+      setCompletedSteps(completed => [...new Set([
+        ...completed, step, ...(next > 1 ? [0, 1] : []),
+      ])]);
+    }
+    setStep(next);
   };
+  const goNext = () => goToStep(Math.min(last, step + 1));
   const goPrev = () => setStep((s) => Math.max(0, s - 1));
   const skip = () => goNext();
   const restart = () => {
     setSaveStatus('idle');
     setStep(0);
+    setCompletedSteps([]);
     setLotteryType(null);
     setAnalysisResult(null);
     setBaseNumberPool(null);
@@ -243,56 +255,76 @@ export default function BuilderPage() {
         })
       : null;
 
+  const currentConfig = lotteryType ? getConfig(lotteryType) : null;
+  const mainRange = currentConfig ? currentConfig.mainMax - currentConfig.mainMin + 1 : 0;
+  const eligibleCandidates = currentConfig && currentNumberPool
+    ? new Set(currentNumberPool.entries
+        .filter(({ num }) => num >= currentConfig.mainMin && num <= currentConfig.mainMax)
+        .map(({ num }) => num)).size
+    : mainRange;
+  const omittedCandidates = mainRange - eligibleCandidates;
+  const retainedPct = mainRange ? Math.round(100 * eligibleCandidates / mainRange) : 0;
+
   const content = STEP_CONTENT[step];
+  const today = new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString().slice(0, 10);
   const isResultStep = step === last;
   // 中間步驟（夢境/生日/命理）可略過
   const canSkip = step >= 2 && step <= 4;
 
   return (
-    <div className="space-y-5 pb-24">
+    <div className="v33-workbench v33-builder">
       {/* Header */}
-      <div className="flex items-center gap-2 pt-2">
-        <button onClick={() => navigate(-1)} className="p-2 rounded-lg hover:bg-gray-800/50 transition" aria-label="返回上一頁">
+      <div className="v33-builder-header flex items-center gap-2 pt-2">
+        <button aria-label="返回上一頁" onClick={() => window.history.state?.idx ? navigate(-1) : navigate('/')} className="p-2 rounded-lg hover:bg-gray-800/50 transition">
           <ChevronLeft className="w-5 h-5 text-gray-400" />
         </button>
         <div>
-          <h1 className="text-xl font-bold text-gray-100 flex items-center gap-2">
+          <h1 className="v33-workbench-title font-bold text-gray-100 flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-amber-400" />
             打造我的專屬號碼
           </h1>
-          <p className="text-xs text-gray-500">一步一步，做出屬於你的號碼</p>
+          <p className="text-xs text-gray-500">可返回已完成步驟。後續步驟請點「下一步」。</p>
         </div>
       </div>
 
       {/* Step indicator */}
-      <StepIndicator current={step} onJump={(i) => { if (i <= step) setStep(i); }} />
-      <p className="text-xs text-gray-500">可點選已完成的步驟返回修改；後續步驟請使用「下一步」。</p>
+      <StepIndicator current={step} completed={completedSteps} canContinue={Boolean(lotteryType)} onJump={goToStep} />
 
       {/* Step content */}
-      <Card className="border border-gray-800 bg-gray-900/80">
-        <CardContent className="p-6 space-y-3 min-h-[200px]">
+      <Card className="v33-builder-content">
+        <CardContent className="v33-builder-content-inner space-y-3 min-h-[200px]">
           <div className="text-xs text-amber-400">步驟 {step + 1} / {BUILDER_STEPS.length}</div>
           <h2 className="text-lg font-bold text-gray-100">{content.title}</h2>
           <p className="text-sm text-gray-400">{content.desc}</p>
 
           {step === 0 ? (
             /* Step 1: 彩種選擇 */
-            <div className="grid grid-cols-1 min-[360px]:grid-cols-3 gap-2 mt-4">
-              {LOTTERIES.map((lt) => (
-                <button
-                  key={lt.id}
-                  onClick={() => { setLotteryType(lt.id); setSaveStatus('idle'); }}
-                  aria-pressed={lotteryType === lt.id}
-                  className={[
-                    'py-3 rounded-lg text-sm font-bold border transition',
-                    lotteryType === lt.id
-                      ? 'bg-amber-500 text-gray-950 border-amber-400'
-                      : 'bg-gray-800 text-gray-300 border-gray-700 hover:border-amber-600/50',
-                  ].join(' ')}
-                >
-                  {lt.name}
-                </button>
-              ))}
+            <div className="v33-builder-games">
+              {LOTTERIES.map((lottery) => {
+                const config = getConfig(lottery.id);
+                const selected = lotteryType === lottery.id;
+                return (
+                  <button key={lottery.id} type="button" aria-pressed={selected}
+                    className="v33-builder-game"
+                    onClick={() => {
+                      if (!selected) {
+                        restart();
+                        setLotteryType(lottery.id);
+                      }
+                    }}>
+                    <span className={`v33-builder-game-ball v33-sphere ${lottery.ball}`} aria-hidden="true">
+                      <span className="v33-ball-face">{config.mainMax}</span>
+                    </span>
+                    <span className="v33-builder-game-copy">
+                      <strong>{config.name}</strong>
+                      <span>{lottery.jackpot}</span>
+                    </span>
+                    <span className="v33-builder-game-check" aria-hidden="true">
+                      {selected && <Check size={15} strokeWidth={3} />}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           ) : step === 1 ? (
             /* Step 2: 基礎統計（呼叫既有 statistics.ts） */
@@ -423,7 +455,7 @@ export default function BuilderPage() {
                   className="w-full px-3 py-2 rounded-lg bg-gray-950 border border-gray-700 text-gray-200 text-sm focus:border-amber-500 outline-none"
                 />
                 <div className="flex gap-2">
-                  <Button onClick={handleApplyDream} disabled={!dreamText.trim() || dreamApplied} className="bg-amber-600 hover:bg-amber-500 text-white disabled:opacity-40">{dreamApplied ? '已加入夢境' : '加入夢境分析'}</Button>
+                  <Button onClick={handleApplyDream} disabled={!dreamText.trim() || dreamApplied} className="bg-amber-600 hover:bg-amber-500 text-white">{dreamApplied ? '已加入夢境' : '加入夢境分析'}</Button>
                   <Button variant="ghost" onClick={skip} className="text-gray-400">略過</Button>
                 </div>
                 {dreamApplied && (
@@ -458,13 +490,13 @@ export default function BuilderPage() {
                   type="date"
                   value={birthday}
                   onChange={(e) => setBirthday(e.target.value)}
-                  max={new Date().toISOString().slice(0, 10)}
+                  max={today}
                   disabled={birthdayApplied}
                   aria-label="生日或紀念日"
                   className="w-full px-3 py-2 rounded-lg bg-gray-950 border border-gray-700 text-gray-200 text-sm focus:border-amber-500 outline-none"
                 />
                 <div className="flex gap-2">
-                  <Button onClick={handleApplyBirthday} disabled={!birthday || birthdayApplied || birthday > new Date().toISOString().slice(0, 10)} className="bg-amber-600 hover:bg-amber-500 text-white disabled:opacity-40">{birthdayApplied ? '已加入生日' : '加入生日分析'}</Button>
+                  <Button onClick={handleApplyBirthday} disabled={!birthday || birthday > today || birthdayApplied} className="bg-amber-600 hover:bg-amber-500 text-white">{birthdayApplied ? '已加入生日' : '加入生日分析'}</Button>
                   <Button variant="ghost" onClick={skip} className="text-gray-400">略過</Button>
                 </div>
                 {birthdayApplied && (
@@ -682,21 +714,20 @@ export default function BuilderPage() {
                       <RotateCcw className="w-4 h-4 mr-1" />重新打造
                     </Button>
                   </div>
+                  {saveStatus === 'failed' && <p className="mt-2 text-xs text-rose-300" role="alert">本機收藏未成功，請重試。</p>}
                   {saveStatus === 'saved' && (
-                    <p className="mt-2 text-xs text-emerald-400">已收藏到「我的號碼」。提示：訪客模式僅保存在本機瀏覽器，清除瀏覽器資料或換裝置後可能消失；登入會員後可永久保存。</p>
+                    <p className="mt-2 text-xs text-emerald-400">已收藏到「我的號碼」。提示：這組號碼儲存在目前的瀏覽器。</p>
                   )}
                   {saveStatus === 'duplicate' && (
                     <p className="mt-2 text-xs text-gray-400">這組號碼已在「我的號碼」中，未重複收藏。</p>
                   )}
                   {(saveStatus === 'saved' || saveStatus === 'duplicate') && (
                     <div className="mt-3 flex flex-col sm:flex-row gap-2">
-                      <Button variant="outline" className="border-gray-700 text-gray-200"
-                        onClick={() => window.dispatchEvent(new CustomEvent('v12-navigate', { detail: 'numbers' }))}>
-                        查看我的號碼
+                      <Button asChild variant="outline" className="border-gray-700 text-gray-200">
+                        <Link to={'/my-numbers?game=' + lotteryType}>查看我的號碼</Link>
                       </Button>
-                      <Button variant="outline" className="border-gray-700 text-gray-200"
-                        onClick={() => navigate('/selection-analysis')}>
-                        前往選號分析
+                      <Button asChild variant="outline" className="border-gray-700 text-gray-200">
+                        <Link to={analysisLink(lotteryType!, finalResult.mainNumbers)}>分析這組</Link>
                       </Button>
                     </div>
                   )}
@@ -708,7 +739,7 @@ export default function BuilderPage() {
       </Card>
 
       {/* Controls */}
-      <div className="flex flex-wrap items-center gap-2 pb-2">
+      <div className="v33-builder-controls flex flex-wrap items-center gap-2">
         <Button variant="outline" onClick={goPrev} disabled={step === 0}
           className="border-gray-700 text-gray-300">
           <ChevronLeft className="w-4 h-4 mr-1" />上一步
@@ -730,6 +761,23 @@ export default function BuilderPage() {
           </Button>
         )}
       </div>
+      <aside className="v33-pool-panel v33-panel" aria-labelledby="v33-pool-title">
+        <h2 id="v33-pool-title"><Filter size={17} aria-hidden="true" />漏斗收斂狀態</h2>
+        <div role="status" aria-atomic="true">
+          <dl className="v33-pool-counts">
+            <div><dt>主號總數</dt><dd>{currentConfig ? mainRange : '—'}</dd></div>
+            <div><dt>目前候選</dt><dd>{currentConfig ? eligibleCandidates : '—'}</dd></div>
+            <div><dt>未納入</dt><dd>{currentConfig ? omittedCandidates : '—'}</dd></div>
+          </dl>
+          <div className="v33-pool-track" aria-hidden="true">
+            <span style={{ width: `${retainedPct}%` }} />
+          </div>
+          <p className="v33-pool-stage">
+            {currentNumberPool ? `保留 ${retainedPct}% 的主號候選` : currentConfig ? '等待建立統計候選池' : '選擇彩種後顯示主號範圍'}
+          </p>
+        </div>
+        <p className="v33-pool-note">依目前候選名單計算，篩選權重不代表開獎機率。</p>
+      </aside>
     </div>
   );
 }

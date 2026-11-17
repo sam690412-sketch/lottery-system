@@ -39,7 +39,7 @@ function RecentAnalysisHistoryBase({
   className = '',
 }: RecentAnalysisHistoryProps) {
   return (
-    <div className={`rounded-2xl border border-white/[0.06] bg-neutral-900 p-4 ${className}`}>
+    <div className={`v33-panel p-4 ${className}`}>
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-sm font-semibold text-neutral-200">最近分析</h3>
         {records.length > 0 && onClear ? (

@@ -23,9 +23,10 @@ import {
 
 interface MemberPageProps {
   onAdminLogin?: () => void;
+  onRoleLabelChange?: (label: string) => void;
 }
 
-export default function MemberPage({ onAdminLogin }: MemberPageProps) {
+export default function MemberPage({ onAdminLogin, onRoleLabelChange }: MemberPageProps) {
   const [role, setRole] = useState<UserRole>(getCurrentRole());
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
@@ -38,10 +39,17 @@ export default function MemberPage({ onAdminLogin }: MemberPageProps) {
   const perms = getCurrentPermissions();
   const trial = getVipTrialStatus();
   const daily = getDailyCountInfo();
+  const roleLabel = perms.label;
+  const roleTone = role === 'vip' ? 'bg-amber-500/15 text-amber-300'
+    : role === 'admin' ? 'bg-slate-400/15 text-slate-200' : 'bg-sky-400/15 v33-data-text';
 
   useEffect(() => {
     setRole(getCurrentRole());
   }, [refresh]);
+
+  useEffect(() => {
+    onRoleLabelChange?.(roleLabel);
+  }, [onRoleLabelChange, roleLabel]);
 
   const handleRegister = () => {
     setError(''); setSuccess('');
@@ -89,103 +97,112 @@ export default function MemberPage({ onAdminLogin }: MemberPageProps) {
   // 未登入
   if (role === 'guest') {
     return (
-      <div className="space-y-6 pb-24">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-100">會員中心</h1>
-          <p className="text-sm text-gray-500">登入以使用更多功能</p>
-        </div>
+      <div className="v33-member space-y-5">
+        <header className="flex items-center gap-3">
+          <span className="v33-member-emblem" aria-hidden="true"><User /></span>
+          <div>
+            <h1 className="font-bold">會員中心</h1>
+            <p className="text-sm text-muted-foreground">登入以使用更多功能</p>
+          </div>
+        </header>
+        <div className="v33-member-guest-grid">
+          <div className="space-y-4">
+            {/* 風險提醒 */}
+            <Alert className="v33-panel text-muted-foreground">
+              <AlertTriangle className="w-4 h-4 text-gray-500 shrink-0" />
+              <AlertDescription className="text-gray-500 text-xs">
+                目前為前端展示版，會員權限存於本機瀏覽器。正式收費版需串接後端資料庫與金流系統。
+              </AlertDescription>
+            </Alert>
 
-        {/* 風險提醒 */}
-        <Alert className="border-gray-700 bg-gray-900/40">
-          <AlertTriangle className="w-4 h-4 text-gray-500 shrink-0" />
-          <AlertDescription className="text-gray-500 text-xs">
-            目前為前端展示版，會員權限存於本機瀏覽器。正式收費版需串接後端資料庫與金流系統。
-          </AlertDescription>
-        </Alert>
+            {/* 訪客提示 */}
+            <Alert className="v33-panel text-amber-300">
+              <AlertTriangle className="w-4 h-4 text-amber-400" />
+              <AlertDescription className="text-amber-300 text-sm">
+                你目前是訪客身份，僅可使用純統計模式（每日3次）。註冊免費會員即可使用夢境選牌、養號延續，並獲得3次VIP體驗！
+              </AlertDescription>
+            </Alert>
 
-        {/* 訪客提示 */}
-        <Alert className="border-amber-800/40 bg-amber-950/20">
-          <AlertTriangle className="w-4 h-4 text-amber-400" />
-          <AlertDescription className="text-amber-300 text-sm">
-            你目前是訪客身份，僅可使用純統計模式（每日3次）。註冊免費會員即可使用夢境選牌、養號延續，並獲得3次VIP體驗！
-          </AlertDescription>
-        </Alert>
+            {/* 登入/註冊表單 */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-gray-200 text-lg">
+                  {mode === 'login' ? '會員登入' : '免費註冊'}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {error && <p className="text-sm text-red-400 bg-red-950/30 p-2 rounded">{error}</p>}
+                {success && <p className="text-sm text-emerald-400 bg-emerald-950/30 p-2 rounded">{success}</p>}
 
-        {/* 登入/註冊表單 */}
-        <Card className="border border-gray-800 bg-gray-900/80">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-gray-200 text-lg">
-              {mode === 'login' ? '會員登入' : '免費註冊'}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {error && <p className="text-sm text-red-400 bg-red-950/30 p-2 rounded">{error}</p>}
-            {success && <p className="text-sm text-emerald-400 bg-emerald-950/30 p-2 rounded">{success}</p>}
+                <div>
+                  <Label htmlFor="member-email" className="text-gray-300">Email</Label>
+                  <Input id="member-email" type="email" autoComplete="username" value={email} onChange={e => setEmail(e.target.value)} placeholder="your@email.com" className="bg-gray-800 border-gray-700 text-gray-100 mt-1" />
+                </div>
+                <div>
+                  <Label htmlFor="member-password" className="text-gray-300">密碼</Label>
+                  <Input id="member-password" type="password" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} value={password} onChange={e => setPassword(e.target.value)} placeholder="至少4碼" className="bg-gray-800 border-gray-700 text-gray-100 mt-1" />
+                </div>
+                {mode === 'register' && (
+                  <div>
+                    <Label htmlFor="member-nickname" className="text-gray-300">暱稱（選填）</Label>
+                    <Input id="member-nickname" autoComplete="nickname" value={nickname} onChange={e => setNickname(e.target.value)} placeholder="暱稱" className="bg-gray-800 border-gray-700 text-gray-100 mt-1" />
+                  </div>
+                )}
 
-            <div>
-              <Label className="text-gray-300">Email</Label>
-              <Input value={email} onChange={e => setEmail(e.target.value)} placeholder="your@email.com" className="bg-gray-800 border-gray-700 text-gray-100 mt-1" />
-            </div>
-            <div>
-              <Label className="text-gray-300">密碼</Label>
-              <Input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="至少4碼" className="bg-gray-800 border-gray-700 text-gray-100 mt-1" />
-            </div>
-            {mode === 'register' && (
-              <div>
-                <Label className="text-gray-300">暱稱（選填）</Label>
-                <Input value={nickname} onChange={e => setNickname(e.target.value)} placeholder="暱稱" className="bg-gray-800 border-gray-700 text-gray-100 mt-1" />
-              </div>
-            )}
+                <Button onClick={mode === 'login' ? handleLogin : handleRegister} className="w-full">
+                  <LogIn className="w-4 h-4 mr-1" />
+                  {mode === 'login' ? '登入' : '註冊'}
+                </Button>
 
-            <Button onClick={mode === 'login' ? handleLogin : handleRegister} className="w-full bg-amber-600 hover:bg-amber-500">
-              <LogIn className="w-4 h-4 mr-1" />
-              {mode === 'login' ? '登入' : '註冊'}
-            </Button>
-
-            <p className="text-center text-sm text-gray-500">
-              {mode === 'login' ? (
-                <>還沒有帳號？ <button onClick={() => { setMode('register'); setError(''); }} className="text-amber-400 hover:underline">免費註冊</button></>
-              ) : (
-                <>已有帳號？ <button onClick={() => { setMode('login'); setError(''); }} className="text-amber-400 hover:underline">登入</button></>
-              )}
-            </p>
-
-          </CardContent>
-        </Card>
-
-        {/* 方案比較 */}
-        <MembershipComparison />
-
-        {/* 管理員 / 測試員登入入口 */}
-        <Card className="border border-purple-800/30 bg-gray-900/40">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-bold text-gray-300 flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-purple-400" />
-                  管理員 / 測試員登入
+                <p className="text-center text-sm text-gray-500">
+                  {mode === 'login' ? (
+                    <>還沒有帳號？ <button onClick={() => { setMode('register'); setError(''); }} className="text-amber-400 hover:underline">免費註冊</button></>
+                  ) : (
+                    <>已有帳號？ <button onClick={() => { setMode('login'); setError(''); }} className="text-amber-400 hover:underline">登入</button></>
+                  )}
                 </p>
-                <p className="text-xs text-gray-500">管理後台或無限測試模式</p>
-              </div>
-              <Button size="sm" onClick={onAdminLogin} className="bg-purple-700 hover:bg-purple-600">
-                進入
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+
+              </CardContent>
+            </Card>
+          </div>
+          <div className="space-y-4">
+            <MembershipComparison />
+
+            {/* 管理員 / 測試員登入入口 */}
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-bold text-gray-300 flex items-center gap-2">
+                      <Shield className="w-4 h-4 text-purple-400" />
+                      管理員 / 測試員登入
+                    </p>
+                    <p className="text-xs text-gray-500">管理後台或無限測試模式</p>
+                  </div>
+                  <Button size="sm" onClick={onAdminLogin} variant="outline">
+                    進入
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     );
   }
 
   // 已登入
   return (
-    <div className="space-y-6 pb-24">
+    <div className="v33-member space-y-5">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-100">會員中心</h1>
-          <p className="text-sm text-gray-500">管理你的帳號與權限</p>
-        </div>
-        <button onClick={handleLogout} className="text-gray-500 hover:text-red-400 transition">
+        <header className="flex items-center gap-3">
+          <span className="v33-member-emblem" aria-hidden="true"><User /></span>
+          <div>
+            <h1 className="font-bold">會員中心</h1>
+            <p className="text-sm text-muted-foreground">管理你的帳號與權限</p>
+          </div>
+        </header>
+        <button onClick={handleLogout} className="min-h-11 min-w-11 grid place-items-center text-gray-500 hover:text-red-400 transition" aria-label="登出">
           <LogOut className="w-5 h-5" />
         </button>
       </div>
@@ -194,17 +211,15 @@ export default function MemberPage({ onAdminLogin }: MemberPageProps) {
       {success && <Alert className="border-emerald-800/40 bg-emerald-950/20"><AlertDescription className="text-emerald-300">{success}</AlertDescription></Alert>}
 
       {/* 身份卡片 */}
-      <Card className={`border ${role === 'vip' ? 'border-amber-700/40 bg-amber-950/10' : role === 'admin' ? 'border-purple-700/40 bg-purple-950/10' : 'border-blue-700/40 bg-blue-950/10'}`}>
+      <Card>
         <CardContent className="p-4">
           <div className="flex items-center gap-3">
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-              role === 'vip' ? 'bg-amber-600' : role === 'admin' ? 'bg-purple-600' : 'bg-blue-600'
-            }`}>
-              {role === 'vip' ? <Crown className="w-6 h-6 text-white" /> : role === 'admin' ? <Shield className="w-6 h-6 text-white" /> : <User className="w-6 h-6 text-white" />}
+            <div className={`w-12 h-12 rounded-full flex items-center justify-center ${roleTone}`}>
+              {role === 'vip' ? <Crown className="w-6 h-6" /> : role === 'admin' ? <Shield className="w-6 h-6" /> : <User className="w-6 h-6" />}
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <Badge className={role === 'vip' ? 'bg-amber-600' : role === 'admin' ? 'bg-purple-600' : 'bg-blue-600'}>
+                <Badge variant="outline" className={roleTone}>
                   {perms.label}
                 </Badge>
                 {role === 'free' && trial.remaining > 0 && (
@@ -221,14 +236,14 @@ export default function MemberPage({ onAdminLogin }: MemberPageProps) {
 
       {/* 統計資訊 */}
       <div className="grid grid-cols-2 gap-3">
-        <Card className="border border-gray-800 bg-gray-900/60">
+        <Card>
           <CardContent className="p-3 text-center">
             <Clock className="w-5 h-5 text-gray-500 mx-auto mb-1" />
-            <p className="text-2xl font-bold text-gray-200">{daily.used}/{daily.limit === 999 ? '∞' : daily.limit}</p>
+            <p className="text-2xl font-bold v33-data-text">{daily.used}/{daily.limit === 999 ? '∞' : daily.limit}</p>
             <p className="text-xs text-gray-500">今日產號</p>
           </CardContent>
         </Card>
-        <Card className="border border-gray-800 bg-gray-900/60">
+        <Card>
           <CardContent className="p-3 text-center">
             <Gift className="w-5 h-5 text-amber-500 mx-auto mb-1" />
             <p className="text-2xl font-bold text-amber-400">{trial.remaining}</p>
@@ -239,7 +254,7 @@ export default function MemberPage({ onAdminLogin }: MemberPageProps) {
 
       {/* VIP體驗狀態 */}
       {role === 'free' && (
-        <Card className="border border-gray-800 bg-gray-900/60">
+        <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
               <Star className="w-4 h-4 text-amber-400" />
@@ -263,7 +278,7 @@ export default function MemberPage({ onAdminLogin }: MemberPageProps) {
       )}
 
       {/* 我的權限 */}
-      <Card className="border border-gray-800 bg-gray-900/60">
+      <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-gray-200 text-base">我的權限</CardTitle>
         </CardHeader>
@@ -308,7 +323,7 @@ export default function MemberPage({ onAdminLogin }: MemberPageProps) {
       {role === 'admin' && (
         <Button
           onClick={() => window.dispatchEvent(new CustomEvent('v12-navigate', { detail: 'admin' }))}
-          className="w-full bg-purple-600 hover:bg-purple-500"
+          className="w-full" variant="outline"
         >
           <Shield className="w-4 h-4 mr-1" /> 進入管理後台
         </Button>
@@ -320,9 +335,9 @@ export default function MemberPage({ onAdminLogin }: MemberPageProps) {
 // ---- VIP 方案元件 ----
 function VIPPlans({ onUpgrade }: { onUpgrade: (plan: 'monthly' | 'quarterly' | 'yearly') => void }) {
   const plans = [
-    { key: 'monthly' as const, name: '月費方案', price: 'NT$ 299', period: '/月', desc: '按月計費，隨時可取消', color: 'border-amber-700/40 bg-amber-950/10' },
-    { key: 'quarterly' as const, name: '季費方案', price: 'NT$ 799', period: '/季', desc: '平均每月 NT$ 266，省17%', color: 'border-amber-600/40 bg-amber-950/15' },
-    { key: 'yearly' as const, name: '年費方案', price: 'NT$ 2,399', period: '/年', desc: '平均每月 NT$ 200，省33%', color: 'border-amber-500/40 bg-amber-950/20' },
+    { key: 'monthly' as const, name: '月費方案', price: 'NT$ 299', period: '/月', desc: '按月計費，隨時可取消' },
+    { key: 'quarterly' as const, name: '季費方案', price: 'NT$ 799', period: '/季', desc: '平均每月 NT$ 266，省17%' },
+    { key: 'yearly' as const, name: '年費方案', price: 'NT$ 2,399', period: '/年', desc: '平均每月 NT$ 200，省33%' },
   ];
 
   return (
@@ -332,7 +347,7 @@ function VIPPlans({ onUpgrade }: { onUpgrade: (plan: 'monthly' | 'quarterly' | '
       </h3>
       <div className="grid grid-cols-1 gap-3">
         {plans.map(p => (
-          <Card key={p.key} className={`border ${p.color}`}>
+          <Card key={p.key}>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -343,7 +358,7 @@ function VIPPlans({ onUpgrade }: { onUpgrade: (plan: 'monthly' | 'quarterly' | '
                   </div>
                   <p className="text-xs text-gray-500">{p.desc}</p>
                 </div>
-                <Button size="sm" onClick={() => onUpgrade(p.key)} className="bg-amber-600 hover:bg-amber-500">
+                <Button size="sm" onClick={() => onUpgrade(p.key)}>
                   模擬升級 <ChevronRight className="w-3 h-3" />
                 </Button>
               </div>
@@ -364,10 +379,10 @@ function MembershipComparison() {
       <div className="space-y-2">
         {([
           { name: '訪客', color: 'text-gray-400', features: ['純統計', '每日3次', '✗夢境', '✗命理', '✗養號'] },
-          { name: '免費會員', color: 'text-blue-400', features: ['純統計', '每日10次', '✓夢境', '✓養號', 'VIP體驗3次'] },
+          { name: '免費會員', color: 'v33-data-text', features: ['純統計', '每日10次', '✓夢境', '✓養號', 'VIP體驗3次'] },
           { name: 'VIP會員', color: 'text-amber-400', features: ['全部功能', '無限產號', '✓命理', '✓進階版', '✓回測+CSV'] },
         ]).map(tier => (
-          <Card key={tier.name} className="border border-gray-800 bg-gray-900/40">
+          <Card key={tier.name}>
             <CardContent className="p-3">
               <p className={`font-bold ${tier.color}`}>{tier.name}</p>
               <div className="flex flex-wrap gap-1 mt-1">

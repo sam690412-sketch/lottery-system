@@ -70,7 +70,7 @@ export default function DigitAnalysisPage() {
         </div>
 
         {/* 期數選擇 */}
-        <div className="flex gap-2 mb-6">
+        <div className="flex flex-wrap gap-2 mb-6">
           {PERIOD_OPTIONS.map(p => (
             <Button
               key={p}
